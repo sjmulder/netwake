@@ -533,11 +533,8 @@ loadFav(void)
 	LRESULT idx, len;
 	char name[256], macStr[256];
 
-	if ((idx = SendMessage(sFavList, LB_GETCURSEL, 0, 0)) == LB_ERR) {
-		MessageBox(NULL, "No selection", NULL, MB_OK);
-		EnableWindow(sDelBtn, FALSE);
+	if ((idx = SendMessage(sFavList, LB_GETCURSEL, 0, 0)) == LB_ERR)
 		return -1;
-	}
 
 	len = SendMessage(sFavList, LB_GETTEXTLEN, idx, 0);
 	if (!len || len >= (LRESULT)sizeof(name)) {
