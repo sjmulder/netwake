@@ -17,10 +17,10 @@ clean:
 netwake.exe: winmain.o resource.o wol.o
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
-netwake.fd: netwake.exe
+netwake.fd: netwake.exe README.md LICENSE.md
 	dd if=/dev/zero of=netwake.fd.tmp bs=1440K count=1 status=none
 	mformat -i netwake.fd.tmp -f 1440 -v netwake ::
-	mcopy -i netwake.fd.tmp netwake.exe ::/
+	mcopy -i netwake.fd.tmp $^ ::/
 	mv netwake.fd.tmp netwake.fd
 
 resource.o: resource.rc
