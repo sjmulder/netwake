@@ -21,9 +21,6 @@ static const DWORD sWndStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU |
     WS_MINIMIZEBOX;
 static const RECT sWndSize = {0, 0, 456, 272};
 
-static const char sNoResMsg[] =
-"An error occured, but the description is unavailable:";
-
 static HINSTANCE sInstance;
 static HFONT sFont;
 static WORD sBaseDpi = 96, sDpi = 96;
@@ -69,32 +66,47 @@ static const struct {
 };
 
 static void
-warnStrWin(const char *prefix)
+strAppend(char *dst, size_t *len, size_t sz, char *src)
 {
-	char msg[1024];
-	DWORD err;
-	size_t len=0, i;
+	size_t i;
 
-	err = GetLastError();
+	for (i = 0; src[i] && *len < sz-1; i++)
+		dst[(*len)++] = src[i];
+	dst[*len] = '\0';
+}
 
-	for (i=0; prefix[i] && len < sizeof(msg)-1; i++)
-		msg[len++] = prefix[i];
-	for (i=0; i < 4 && len < sizeof(msg)-1; i++)
-		msg[len++] = "\r\n\r\n"[i];
-	msg[len] = '\0';
+static void
+strAppendInt(char *dst, size_t *len, size_t sz, int num)
+{
+	char numStr[16];
+	size_t numLen=0, i;
 
-	FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, err, 0,
-	    &msg[len], sizeof(msg) - len, NULL);
-	MessageBox(sWnd, msg, sAppTitle, MB_OK | MB_ICONEXCLAMATION);
+	for (; num && numLen < sizeof(numStr); num /= 10)
+		numStr[numLen++] = '0' + (num % 10);
+	for (i = numLen; i && *len < sz-1; i--)
+		dst[(*len)++] = numStr[i-1];
 }
 
 static void
 warn(int msgRes)
 {
 	char msg[1024];
+	DWORD err;
+	size_t len;
 
 	if (!LoadString(sInstance, msgRes, msg, sizeof(msg))) {
-		warnStrWin(sNoResMsg);
+		err = GetLastError();
+
+		strAppend(msg, &len, sizeof(msg), "An error occured, but the "
+		    "description no. ");
+		strAppendInt(msg, &len, sizeof(msg), msgRes);
+		strAppend(msg, &len, sizeof(msg), " could not be loaded:"
+		    "\r\n\r\n");
+
+		FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, err, 0,
+		    &msg[len], sizeof(msg) - len, NULL);
+
+		MessageBox(sWnd, msg, sAppTitle, MB_OK | MB_ICONEXCLAMATION);
 		return;
 	}
 
@@ -105,22 +117,36 @@ static void
 warnWin(int prefixRes)
 {
 	char msg[1024];
-	DWORD err;
-	size_t len, i;
+	DWORD err, err2;
+	size_t len;
 
 	err = GetLastError();
 
 	if (!(len = LoadString(sInstance, prefixRes, msg, sizeof(msg)))) {
-		warnStrWin(sNoResMsg);
+		err2 = GetLastError();
+
+		strAppend(msg, &len, sizeof(msg), "An error occured, but the "
+		    "description no. ");
+		strAppendInt(msg, &len, sizeof(msg), prefixRes);
+		strAppend(msg, &len, sizeof(msg), " could not be loaded:"
+		    "\r\n\r\n");
+
+		len += FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, err2, 0,
+		    &msg[len], sizeof(msg) - len, NULL);
+
+		strAppend(msg, &len, sizeof(msg), "\r\nThe original error was:"
+		    "\r\n\r\n");
+		FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, err, 0,
+		    &msg[len], sizeof(msg) - len, NULL);
+
+		MessageBox(sWnd, msg, sAppTitle, MB_OK | MB_ICONEXCLAMATION);
 		return;
 	}
 
-	for (i=0; i < 4 && len < sizeof(msg)-1; i++)
-		msg[len++] = "\r\n\r\n"[i];
-	msg[len] = '\0';
-
+	strAppend(msg, &len, sizeof(msg), "\r\n\r\n");
 	FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, err, 0,
 	    &msg[len], sizeof(msg) - len, NULL);
+
 	MessageBox(sWnd, msg, sAppTitle, MB_OK | MB_ICONEXCLAMATION);
 }
 
