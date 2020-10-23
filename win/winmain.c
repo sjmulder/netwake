@@ -17,6 +17,10 @@ static UINT (*sGetDpiForSystem)(void);
 static UINT (*sInitCommonControls)(void);
 
 static const char sClassName[] = "Netwake";
+static const char sIniName[] = "netwake.ini";
+static const char sRegRoot[] = "Software\\Netwake";
+static const char sRegFavs[] = "Software\\Netwake\\Favourites";
+
 static const DWORD sWndStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU |
     WS_MINIMIZEBOX;
 static const RECT sWndSize = {0, 0, 456, 272};
@@ -322,14 +326,14 @@ loadPrefsIni(void)
 	buf[0] = '\0';
 
 	GetPrivateProfileString("Main", "LastAddress", NULL, buf, sizeof(buf),
-	    "netwake.ini");
+	    sIniName);
 	SetWindowText(sMacField, buf);
 	SendMessage(sMacField, EM_SETSEL, (WPARAM)0, (LPARAM)-1);
 
 	buf[0] = '\0';
 	buf[1] = '\0';
 	GetPrivateProfileString("Favourites", NULL, NULL, buf, sizeof(buf),
-	    "netwake.ini");
+	    sIniName);
 
 	for (name = buf; *name; name += strlen(name)+1)
 		SendMessage(sFavList, LB_ADDSTRING, 0, (LPARAM)name);
@@ -343,8 +347,7 @@ loadPrefsReg(void)
 	DWORD sz, type, i;
 	LONG lret;
 
-	lret = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Netwake", 0,
-	    KEY_READ, &key);
+	lret = RegOpenKeyEx(HKEY_CURRENT_USER, sRegRoot, 0, KEY_READ, &key);
 	if (lret != ERROR_SUCCESS)
 		return;
 
@@ -358,8 +361,7 @@ loadPrefsReg(void)
 
 	RegCloseKey(key);
 
-	lret = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Netwake\\Favourites",
-	    0, KEY_READ, &key);
+	lret = RegOpenKeyEx(HKEY_CURRENT_USER, sRegFavs, 0, KEY_READ, &key);
 	if (lret != ERROR_SUCCESS)
 		return;
 
@@ -395,19 +397,16 @@ saveLastMac(const char *val)
 	HKEY key;
 
 	if (sIs95Up) {
-		lret = RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\Netwake",
-		    0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL,
-		    &key, NULL);
+		lret = RegCreateKeyExA(HKEY_CURRENT_USER, sRegRoot, 0, NULL,
+		    REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, NULL);
 		if (lret != ERROR_SUCCESS)
 			return;
 
 		RegSetValueEx(key, "LastAddress", 0, REG_SZ, (BYTE *)val,
 		    strlen(val)+1);
 		RegCloseKey(key);
-	} else {
-		WritePrivateProfileString("Main", "LastAddress", val,
-		     "netwake.ini");
-	}
+	} else
+		WritePrivateProfileString("Main", "LastAddress", val, sIniName);
 }
 
 static int
@@ -416,9 +415,8 @@ saveFavReg(const char *name, const char *val)
 	LONG lret;
 	HKEY key;
 
-	lret = RegCreateKeyExA(HKEY_CURRENT_USER,
-	    "Software\\Netwake\\Favourites", 0, NULL, REG_OPTION_NON_VOLATILE,
-	    KEY_ALL_ACCESS, NULL, &key, NULL);
+	lret = RegCreateKeyExA(HKEY_CURRENT_USER, sRegFavs, 0, NULL,
+	    REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, NULL);
 	if (lret != ERROR_SUCCESS) {
 		warnWin(IDS_EREGWRITE);
 		RegCloseKey(key);
@@ -441,8 +439,7 @@ saveFavIni(const char *name, const char *val)
 {
 	BOOL bret;
 
-	bret = WritePrivateProfileString("Favourites", name, val,
-	    "netwake.ini");
+	bret = WritePrivateProfileString("Favourites", name, val, sIniName);
 	if (!bret) {
 		warnWin(IDS_EINIWRITE);
 		return -1;
@@ -492,8 +489,7 @@ loadFavReg(const char *name, char *val, size_t sz)
 	HKEY key;
 	DWORD sz2, type;
 
-	lret = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Netwake\\Favourites",
-	    0, KEY_READ, &key);
+	lret = RegOpenKeyEx(HKEY_CURRENT_USER, sRegFavs, 0, KEY_READ, &key);
 	if (lret != ERROR_SUCCESS)
 		return -1;
 
@@ -514,8 +510,7 @@ loadFavIni(const char *name, char *val, size_t sz)
 {
 	val[0] = '\0';
 
-	GetPrivateProfileString("Favourites", name, NULL, val, sz,
-	    "netwake.ini");
+	GetPrivateProfileString("Favourites", name, NULL, val, sz, sIniName);
 	if (!val[0]) {
 		warn(IDS_EINIREAD);
 		return -1;
@@ -570,8 +565,8 @@ deleteFavReg(const char *name)
 	LONG lret;
 	HKEY key;
 
-	lret = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Netwake\\Favourites",
-	    0, KEY_SET_VALUE, &key);
+	lret = RegOpenKeyEx(HKEY_CURRENT_USER, sRegFavs, 0, KEY_SET_VALUE,
+	    &key);
 	if (lret != ERROR_SUCCESS ||
 	    RegDeleteValue(key, name) != ERROR_SUCCESS) {
 		warnWin(IDS_EREGWRITE);
@@ -588,8 +583,7 @@ deleteFavIni(const char *name)
 {
 	BOOL bret;
 
-	bret = WritePrivateProfileString("Favourites", name, NULL,
-	    "netwake.ini");
+	bret = WritePrivateProfileString("Favourites", name, NULL, sIniName);
 	if (!bret) {
 		warnWin(IDS_EINIWRITE);
 		return -1;
