@@ -20,3 +20,5 @@ resource.o: resource.rc
 
 winmain.o:	wol.h util.h
 wol.o:		wol.h util.h
+
+.PHONY: all clean
