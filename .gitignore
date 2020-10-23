@@ -1,2 +1,6 @@
+.vs/
+Debug/
+Release/
+*.user
 *.o
 netwake.exe
