@@ -44,7 +44,7 @@ static HWND sQuitBtn, sDelBtn, sSaveBtn;
 
 static const struct {
 	HWND *wnd;
-	int x, y, w, h; /* 1px @ 96 DPI @ classic Windows (95+) font size */
+	int x, y, w, h; /* 1/8th of font size (1px on Windows 95-XP) */
 	const char *className;
 	const char *text;
 	DWORD style, exStyle;
@@ -116,7 +116,7 @@ loadFont(void)
 	lfont->lfHeight = MulDiv(lfont->lfHeight, sDpi, sBaseDpi);
 	lfont->lfWidth = MulDiv(lfont->lfWidth, sDpi, sBaseDpi);
 
-	sFontSize = (WORD)-lfont->lfHeight;
+	sFontSize = (WORD)MulDiv(-lfont->lfHeight, 72, 96);
 
 	if (sFont)
 		DeleteObject(sFont);
@@ -134,10 +134,10 @@ createControls(void)
 		    sCtrlDefs[i].exStyle,
 		    sCtrlDefs[i].className, sCtrlDefs[i].text,
 		    sCtrlDefs[i].style | WS_VISIBLE | WS_CHILD,
-		    MulDiv(sCtrlDefs[i].x, sFontSize, 11),
-		    MulDiv(sCtrlDefs[i].y, sFontSize, 11),
-		    MulDiv(sCtrlDefs[i].w, sFontSize, 11),
-		    MulDiv(sCtrlDefs[i].h, sFontSize, 11),
+		    MulDiv(sCtrlDefs[i].x, sFontSize, 8),
+		    MulDiv(sCtrlDefs[i].y, sFontSize, 8),
+		    MulDiv(sCtrlDefs[i].w, sFontSize, 8),
+		    MulDiv(sCtrlDefs[i].h, sFontSize, 8),
 		    sWnd, NULL, sInstance, NULL);
 
 		if (!*sCtrlDefs[i].wnd)
@@ -158,10 +158,10 @@ relayoutControls(void)
 		    MAKELPARAM(FALSE, 0));
 
 		MoveWindow(*sCtrlDefs[i].wnd,
-		    MulDiv(sCtrlDefs[i].x, sFontSize, 11),
-		    MulDiv(sCtrlDefs[i].y, sFontSize, 11),
-		    MulDiv(sCtrlDefs[i].w, sFontSize, 11),
-		    MulDiv(sCtrlDefs[i].h, sFontSize, 11), TRUE);
+		    MulDiv(sCtrlDefs[i].x, sFontSize, 8),
+		    MulDiv(sCtrlDefs[i].y, sFontSize, 8),
+		    MulDiv(sCtrlDefs[i].w, sFontSize, 8),
+		    MulDiv(sCtrlDefs[i].h, sFontSize, 8), TRUE);
 	}
 }
 
@@ -372,9 +372,9 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		GetClientRect(sWnd, &client);
 
 		frame.right -= client.right;
-		frame.right += MulDiv(sWndSize.right, sFontSize, 11);
+		frame.right += MulDiv(sWndSize.right, sFontSize, 8);
 		frame.bottom -= client.bottom;
-		frame.bottom += MulDiv(sWndSize.bottom, sFontSize, 11);
+		frame.bottom += MulDiv(sWndSize.bottom, sFontSize, 8);
 
 		AdjustWindowRect(&client, sWndStyle, FALSE);
 		MoveWindow(sWnd, frame.left, frame.top,
@@ -468,8 +468,8 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 		err(1, "RegisterClass failed.");
 
 	rect = sWndSize;
-	rect.right = MulDiv(rect.right, sFontSize, 11);
-	rect.bottom = MulDiv(rect.bottom, sFontSize, 11);
+	rect.right = MulDiv(rect.right, sFontSize, 8);
+	rect.bottom = MulDiv(rect.bottom, sFontSize, 8);
 
 	if (!AdjustWindowRect(&rect, sWndStyle, FALSE))
 		err(1, "AdjustWindowRect() failed.");
