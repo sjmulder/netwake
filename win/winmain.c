@@ -26,7 +26,7 @@ static const char sInfoText[] =
 
 static const char sBadMacText[] =
 "Invalid MAC address.\r\n\r\n"
-"The address should consist of 8 pairs of hexadecimal digits (0-A), "
+"The address should consist of 6 pairs of hexadecimal digits (0-A), "
 "optionally separated by colons.\r\n\r\n"
 "Example: d2:32:e4:87:85:24";
 
