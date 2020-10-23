@@ -44,7 +44,7 @@ static HWND sQuitBtn, sDelBtn, sSaveBtn;
 
 static const struct {
 	HWND *wnd;
-	int x, y, w, h;
+	int x, y, w, h; /* in 1/8ths of font height, usually a pixel */
 	const char *className;
 	const char *text;
 	DWORD style, exStyle;
@@ -96,9 +96,49 @@ setupWinsock(void)
 	if (WSAStartup(MAKEWORD(2, 0), &data))
 		err(1, "WSAStartup failed");
 }
+static void
+createControls(void)
+{
+	BOOL bret;
+	NONCLIENTMETRICS metrics;
+	LOGFONT *lfont;
+	int i;
+
+	ZeroMemory(&metrics, sizeof(metrics));
+	metrics.cbSize = sizeof(metrics);
+
+	bret = SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(metrics),
+	    &metrics, 0);
+	if (!bret)
+		err(1, "SystemParametersInfo() failed.");
+
+	/* no need to scale here, Dpi == BaseDpi at initial setup */
+	lfont = &metrics.lfMessageFont;
+
+	if (!(sFont = CreateFontIndirect(&metrics.lfMessageFont)))
+		err(1, "CreateFontIndirect() failed.");
+
+	for (i=0; i < (int)LEN(sCtrlDefs); i++) {
+		*sCtrlDefs[i].wnd = CreateWindowEx(
+		    sCtrlDefs[i].exStyle,
+		    sCtrlDefs[i].className, sCtrlDefs[i].text,
+		    sCtrlDefs[i].style | WS_VISIBLE | WS_CHILD,
+		    MulDiv(sCtrlDefs[i].x, -lfont->lfHeight, 12),
+		    MulDiv(sCtrlDefs[i].y, -lfont->lfHeight, 12),
+		    MulDiv(sCtrlDefs[i].w, -lfont->lfHeight, 12),
+		    MulDiv(sCtrlDefs[i].h, -lfont->lfHeight, 12),
+		    sWnd, NULL, sInstance, NULL);
+
+		if (!*sCtrlDefs[i].wnd)
+			err(1, "CreateWindowEx() failed.");
+
+		SendMessage(*sCtrlDefs[i].wnd, WM_SETFONT, (WPARAM)sFont,
+		    MAKELPARAM(FALSE, 0));
+	} 
+}
 
 static void
-applySystemFont(void)
+relayoutControls(void)
 {
 	BOOL bret;
 	NONCLIENTMETRICS metrics;
@@ -114,51 +154,27 @@ applySystemFont(void)
 	bret = SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(metrics),
 	    &metrics, 0);
 	if (!bret)
-		err(1, "SystemParametersInfo failed");
+		err(1, "SystemParametersInfo() failed.");
 
 	lfont = &metrics.lfMessageFont;
 	lfont->lfHeight = MulDiv(lfont->lfHeight, sDpi, sBaseDpi);
 	lfont->lfWidth = MulDiv(lfont->lfWidth, sDpi, sBaseDpi);
 
+	if (sFont)
+		DeleteObject(sFont);
 	if (!(sFont = CreateFontIndirect(lfont)))
-		err(1, "CreateFontIndirect failed");
-
-	for (i=0; i < (int)LEN(sCtrlDefs); i++)
-		SendMessage(*sCtrlDefs[i].wnd, WM_SETFONT, (WPARAM)sFont,
-		    MAKELPARAM(FALSE, 0));
-}
-
-static void
-createControls(void)
-{
-	int i;
+		err(1, "CreateFontIndirect() failed.");
 
 	for (i=0; i < (int)LEN(sCtrlDefs); i++) {
-		*sCtrlDefs[i].wnd = CreateWindowEx(
-		    sCtrlDefs[i].exStyle,
-		    sCtrlDefs[i].className, sCtrlDefs[i].text,
-		    sCtrlDefs[i].style | WS_VISIBLE | WS_CHILD,
-		    MulDiv(sCtrlDefs[i].x, sDpi, 96),
-		    MulDiv(sCtrlDefs[i].y, sDpi, 96),
-		    MulDiv(sCtrlDefs[i].w, sDpi, 96),
-		    MulDiv(sCtrlDefs[i].h, sDpi, 96),
-		    sWnd, NULL, sInstance, NULL);
-		if (!*sCtrlDefs[i].wnd)
-			err(1, "Failed to create window");
-	} 
-}
+		SendMessage(*sCtrlDefs[i].wnd, WM_SETFONT, (WPARAM)sFont,
+		    MAKELPARAM(FALSE, 0));
 
-static void
-relayout(void)
-{
-	int i;
-
-	for (i=0; i < (int)LEN(sCtrlDefs); i++)
 		MoveWindow(*sCtrlDefs[i].wnd,
-		    MulDiv(sCtrlDefs[i].x, sDpi, 96),
-		    MulDiv(sCtrlDefs[i].y, sDpi, 96),
-		    MulDiv(sCtrlDefs[i].w, sDpi, 96),
-		    MulDiv(sCtrlDefs[i].h, sDpi, 96), TRUE);
+		    MulDiv(sCtrlDefs[i].x, -lfont->lfHeight, 12),
+		    MulDiv(sCtrlDefs[i].y, -lfont->lfHeight, 12),
+		    MulDiv(sCtrlDefs[i].w, -lfont->lfHeight, 12),
+		    MulDiv(sCtrlDefs[i].h, -lfont->lfHeight, 12), TRUE);
+	}
 }
 
 static void
@@ -359,14 +375,13 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 	switch (msg) {
 	case WM_SYSCOLORCHANGE:
 	case CPAT_WM_THEMECHANGED:
-		applySystemFont();
+		relayoutControls();
 		return 0;
 	case CPAT_WM_DPICHANGED:
 		sDpi = HIWORD(wparam);
 		rectp = (RECT *)lparam;
 
-		relayout();
-		applySystemFont();
+		relayoutControls();
 		MoveWindow(wnd, rectp->left, rectp->top,
 		    rectp->right - rectp->left,
 		    rectp->bottom - rectp->top, TRUE);
@@ -459,7 +474,6 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 		err(1, "CreateWindow failed");
 
 	createControls();
-	applySystemFont();
 	loadPrefs();
 	SetFocus(sMacField);
 	ShowWindow(sWnd, showCmd);
