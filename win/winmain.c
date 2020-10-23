@@ -182,35 +182,35 @@ loadPrefs(void)
 {
 	HKEY key;
 	char macStr[256], name[256];
-	DWORD sz, i;
-	LSTATUS ls;
+	DWORD sz, type, i;
+	LONG lret;
 
-	ls = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Netwake", 0,
+	lret = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Netwake", 0,
 	    KEY_READ, &key);
-	if (ls != ERROR_SUCCESS)
+	if (lret != ERROR_SUCCESS)
 		return;
 
 	sz = (DWORD)sizeof(macStr);
-	ls = RegGetValue(key, NULL, "LastAddress", RRF_RT_REG_SZ, NULL,
-	    (BYTE*)macStr, &sz);
-	if (ls == ERROR_SUCCESS) {
+	lret = RegQueryValueEx(key, "LastAddress", NULL, &type, (BYTE *)macStr,
+	    &sz);
+	if (lret == ERROR_SUCCESS && type == REG_SZ) {
 		SetWindowText(sMacField, macStr);
 		SendMessage(sMacField, EM_SETSEL, (WPARAM)0, (LPARAM)-1);
 	}
 
 	RegCloseKey(key);
 
-	ls = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Netwake\\Favourites", 0,
+	lret = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Netwake\\Favourites", 0,
 	    KEY_READ, &key);
-	if (ls != ERROR_SUCCESS)
+	if (lret != ERROR_SUCCESS)
 		return;
 
 	for (i=0; ; i++) {
 		sz = (DWORD)sizeof(name);
-		ls = RegEnumValue(key, i, name, &sz, NULL, NULL, NULL, NULL);
-		if (ls == ERROR_SUCCESS)
+		lret = RegEnumValue(key, i, name, &sz, NULL, NULL, NULL, NULL);
+		if (lret == ERROR_SUCCESS)
 			SendMessage(sFavList, LB_ADDSTRING, 0, (LPARAM)name);
-		else if (ls == ERROR_NO_MORE_ITEMS)
+		else if (lret == ERROR_NO_MORE_ITEMS)
 			break;
 		else
 			err(1, "RegEnumValue() failed");
@@ -245,15 +245,15 @@ saveFav(void)
 	FormatMacAddr(&mac, macStr);
 	SetWindowText(sMacField, macStr);
 
-	ls = RegCreateKeyExA(HKEY_CURRENT_USER,
+	lret = RegCreateKeyExA(HKEY_CURRENT_USER,
 	    "Software\\Netwake\\Favourites", 0, NULL, REG_OPTION_NON_VOLATILE,
 	    KEY_ALL_ACCESS, NULL, &key, NULL);
-	if (ls != ERROR_SUCCESS)
+	if (lret != ERROR_SUCCESS)
 		err(1, "RegCreateKeyExA() failed");
 
-	ls = RegSetValueEx(key, name, 0, REG_SZ, (BYTE *)macStr,
+	lret = RegSetValueEx(key, name, 0, REG_SZ, (BYTE *)macStr,
 	    strlen(macStr)+1);
-	if (ls != ERROR_SUCCESS)
+	if (lret != ERROR_SUCCESS)
 		err(1, "RegSetValueEx() failed");
 
 	RegCloseKey(key);
@@ -266,10 +266,10 @@ static int
 loadFav(void)
 {
 	LRESULT idx, len;
-	LSTATUS ls;
+	LONG lret;
 	char name[256], macStr[256];
 	HKEY key;
-	DWORD sz;
+	DWORD sz, type;
 
 	if ((idx = SendMessage(sFavList, LB_GETCURSEL, 0, 0)) == LB_ERR) {
 		EnableWindow(sDelBtn, FALSE);
@@ -283,15 +283,17 @@ loadFav(void)
 		err(1, "LB_GETTEXT failed.");
 	name[len] = '\0';
 
-	ls = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Netwake\\Favourites", 0,
+	lret = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Netwake\\Favourites", 0,
 	    KEY_READ, &key);
-	if (ls != ERROR_SUCCESS)
+	if (lret != ERROR_SUCCESS)
 		return -1;
 
 	sz = (DWORD)sizeof(macStr);
-	ls = RegGetValue(key, NULL, name, RRF_RT_REG_SZ, NULL, (BYTE*)macStr, &sz);
-	if (ls != ERROR_SUCCESS)
-		err(1, "RegGetValue() failed");
+	lret = RegQueryValueEx(key, name, NULL, &type, (BYTE *)macStr, &sz);
+	if (lret != ERROR_SUCCESS)
+		err(1, "RegGetValue() failed.");
+	if (type != REG_SZ)
+		err(1, "Registry value is of the wrong type.");
 
 	RegCloseKey(key);
 
@@ -306,7 +308,7 @@ static void
 deleteFav()
 {
 	LRESULT idx, len;
-	LSTATUS ls;
+	LONG lret;
 	char name[256];
 	HKEY key;
 
@@ -322,9 +324,9 @@ deleteFav()
 		err(1, "LB_GETTEXT failed.");
 	name[len] = '\0';
 
-	ls = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Netwake\\Favourites", 0,
+	lret = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Netwake\\Favourites", 0,
 	    KEY_SET_VALUE, &key);
-	if (ls != ERROR_SUCCESS)
+	if (lret != ERROR_SUCCESS)
 		err(1, "RegOpenKeyEx() failed.");
 	if (RegDeleteValue(key, name) != ERROR_SUCCESS)
 		err(1, "RegDeleteValue() failed.");
@@ -340,7 +342,7 @@ sendWol(void)
 	char buf[256];
 	tMacAddr mac;
 	HKEY key;
-	LSTATUS ls;
+	LONG lret;
 
 	GetWindowText(sMacField, buf, sizeof(buf));
 
@@ -357,9 +359,9 @@ sendWol(void)
 	MessageBox(sWnd, "Wake-on-LAN packet sent!", "Netwake",
 	    MB_ICONINFORMATION | MB_OK);
 
-	ls = RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\Netwake", 0, NULL,
+	lret = RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\Netwake", 0, NULL,
 	    REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, NULL);
-	if (ls == ERROR_SUCCESS) {
+	if (lret == ERROR_SUCCESS) {
 		RegSetValueEx(key, "LastAddress", 0, REG_SZ, (BYTE *)buf,
 		    strlen(buf)+1);
 		RegCloseKey(key);
