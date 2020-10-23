@@ -2,9 +2,11 @@
 Debug/
 Release/
 *.o
+*.tmp
 *.user
 *.aps
 *.ncb
 *.opt
 *.plg
 netwake.exe
+netwake.fd

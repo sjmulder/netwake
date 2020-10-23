@@ -10,10 +10,15 @@ VPATH+=		../
 all: netwake.exe
 
 clean:
-	rm -f netwake.exe *.o
+	rm -f netwake.exe netwake.fd *.o *.tmp
 
 netwake.exe: winmain.o resource.o wol.o util.o
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+netwake.fd: netwake.exe
+	/sbin/mkfs.msdos -C netwake.fd.tmp 1440 >/dev/null
+	mcopy -i netwake.fd.tmp netwake.exe ::/
+	mv netwake.fd.tmp netwake.fd
 
 resource.o: resource.rc
 	$(RES) $(RESFLAGS) $< $@
