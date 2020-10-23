@@ -99,7 +99,7 @@ info(int msgRes)
 	MessageBox(sWnd, msg, sAppTitle, MB_OK | MB_ICONINFORMATION);
 }
 
-static inline int
+static int
 scale(int magnitude)
 {
 	/*
