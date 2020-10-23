@@ -242,9 +242,38 @@ loadFont(void)
 }
 
 static void
+getControlRect(int idx, int *x, int *y, int *w, int *h)
+{
+	HWND *wnd;
+
+	*x = scale(sCtrlDefs[idx].x);
+	*y = scale(sCtrlDefs[idx].y);
+	*w = scale(sCtrlDefs[idx].w);
+	*h = scale(sCtrlDefs[idx].h);
+
+	wnd = sCtrlDefs[idx].wnd;
+
+	if (sIs95Up)
+		;
+	else if (wnd == &sMacField || wnd == &sNameField) {
+		/* little bit larger on 3.11 to prevent clipping */
+		*y -= 1;
+		*h += 2;
+	} else if (wnd == &sFavList) {
+		/*
+		 * On 95+ list boxes with WS_EX_CLIENTEDGE are 2 px smaller
+		 * than edit controls with the same style. On 3.11 with
+		 * WS_BORDER they aren't.
+		 */
+		*x += 1; *y += 1;
+		*w -= 2; *h -= 2;
+	}
+}
+
+static void
 createControls(void)
 {
-	int i;
+	int i, x, y, w, h;
 	char str[512];
 	DWORD style;
 
@@ -256,11 +285,11 @@ createControls(void)
 		if (!sIs95Up && (sCtrlDefs[i].exStyle & WS_EX_CLIENTEDGE))
 			style |= WS_BORDER;
 
+		getControlRect(i, &x, &y, &w, &h);
+
 		*sCtrlDefs[i].wnd = CreateWindowEx(
 		    sCtrlDefs[i].exStyle, sCtrlDefs[i].className, str, style,
-		    scale(sCtrlDefs[i].x), scale(sCtrlDefs[i].y),
-		    scale(sCtrlDefs[i].w), scale(sCtrlDefs[i].h),
-		    sWnd, (HMENU)sCtrlDefs[i].id, sInstance, NULL);
+		    x, y, w, h, sWnd, (HMENU)sCtrlDefs[i].id, sInstance, NULL);
 		if (!*sCtrlDefs[i].wnd)
 			errWin(IDS_ECREATEWND);
 
@@ -273,16 +302,15 @@ createControls(void)
 static void
 relayoutControls(void)
 {
-	int i;
+	int i, x, y, w, h;
 
 	for (i=0; i < (int)LEN(sCtrlDefs); i++) {
 		if (sFont)
 			SendMessage(*sCtrlDefs[i].wnd, WM_SETFONT,
 			    (WPARAM)sFont, MAKELPARAM(FALSE, 0));
 
-		MoveWindow(*sCtrlDefs[i].wnd,
-		    scale(sCtrlDefs[i].x), scale(sCtrlDefs[i].y),
-		    scale(sCtrlDefs[i].w), scale(sCtrlDefs[i].h), TRUE);
+		getControlRect(i, &x, &y, &w, &h);
+		MoveWindow(*sCtrlDefs[i].wnd, x, y, w, h, TRUE);
 	}
 }
 
