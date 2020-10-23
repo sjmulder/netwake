@@ -231,8 +231,10 @@ loadPrefs(void)
 			SendMessage(sFavList, LB_ADDSTRING, 0, (LPARAM)name);
 		else if (lret == ERROR_NO_MORE_ITEMS)
 			break;
-		else
-			err(IDS_EREGREAD);
+		else {
+			warn(IDS_EREGREAD);
+			break;
+		}
 	}
 
 	RegCloseKey(key);
@@ -265,13 +267,19 @@ saveFav(void)
 	lret = RegCreateKeyExA(HKEY_CURRENT_USER,
 	    "Software\\Netwake\\Favourites", 0, NULL, REG_OPTION_NON_VOLATILE,
 	    KEY_ALL_ACCESS, NULL, &key, NULL);
-	if (lret != ERROR_SUCCESS)
-		err(IDS_EREGWRITE);
+	if (lret != ERROR_SUCCESS) {
+		RegCloseKey(key);
+		warn(IDS_EREGWRITE);
+		return;
+	}
 
 	lret = RegSetValueEx(key, name, 0, REG_SZ, (BYTE *)macStr,
 	    strlen(macStr)+1);
-	if (lret != ERROR_SUCCESS)
-		err(IDS_EREGWRITE);
+	if (lret != ERROR_SUCCESS) {
+		RegCloseKey(key);
+		warn(IDS_EREGWRITE);
+		return;
+	}
 
 	RegCloseKey(key);
 
@@ -294,10 +302,12 @@ loadFav(void)
 	}
 
 	len = SendMessage(sFavList, LB_GETTEXTLEN, idx, 0);
-	if (!len || len >= (LRESULT)sizeof(name))
-		err(IDS_ENAMEREAD);
-	if (SendMessage(sFavList, LB_GETTEXT, idx, (LPARAM)name) == LB_ERR)
-		err(IDS_ENAMEREAD);
+	if (!len || len >= (LRESULT)sizeof(name) ||
+	    SendMessage(sFavList, LB_GETTEXT, idx, (LPARAM)name) == LB_ERR) {
+		warn(IDS_ENAMEREAD);
+		return -1;
+	}
+
 	name[len] = '\0';
 
 	lret = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Netwake\\Favourites", 0,
@@ -307,10 +317,11 @@ loadFav(void)
 
 	sz = (DWORD)sizeof(macStr);
 	lret = RegQueryValueEx(key, name, NULL, &type, (BYTE *)macStr, &sz);
-	if (lret != ERROR_SUCCESS)
-		err(IDS_EREGREAD);
-	if (type != REG_SZ)
-		err(IDS_EREGREAD);
+	if (lret != ERROR_SUCCESS || type != REG_SZ) {
+		RegCloseKey(key);
+		warn(IDS_EREGREAD);
+		return -1;
+	}
 
 	RegCloseKey(key);
 
@@ -335,18 +346,23 @@ deleteFav()
 	}
 
 	len = SendMessage(sFavList, LB_GETTEXTLEN, idx, 0);
-	if (!len || len >= (LRESULT)sizeof(name))
-		err(IDS_ENAMEREAD);
-	if (SendMessage(sFavList, LB_GETTEXT, idx, (LPARAM)name) == LB_ERR)
-		err(IDS_ENAMEREAD);
+	if (!len || len >= (LRESULT)sizeof(name) ||
+	    SendMessage(sFavList, LB_GETTEXT, idx, (LPARAM)name) == LB_ERR) {
+		warn(IDS_ENAMEREAD);
+		return;
+	}
+
 	name[len] = '\0';
 
-	lret = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Netwake\\Favourites", 0,
-	    KEY_SET_VALUE, &key);
-	if (lret != ERROR_SUCCESS)
-		err(IDS_EREGWRITE);
-	if (RegDeleteValue(key, name) != ERROR_SUCCESS)
-		err(IDS_EREGWRITE);
+	lret = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Netwake\\Favourites",
+	    0, KEY_SET_VALUE, &key);
+	if (lret != ERROR_SUCCESS ||
+	    RegDeleteValue(key, name) != ERROR_SUCCESS) {
+		RegCloseKey(key);
+		warn(IDS_EREGWRITE);
+		return;
+	}
+
 	RegCloseKey(key);
 
 	SendMessage(sFavList, LB_DELETESTRING, idx, 0);
@@ -371,8 +387,10 @@ sendWol(void)
 	FormatMacAddr(&mac, buf);
 	SetWindowText(sMacField, buf);
 
-	if (SendWolPacket(&mac) == -1)
-		err(IDS_ESOCKERR);
+	if (SendWolPacket(&mac) == -1) {
+		warn(IDS_ESOCKERR);
+		return;
+	}
 
 	info(IDS_WOLSENT);
 
