@@ -212,6 +212,7 @@ loadFunctions(void)
 	sGetDpiForSystem = (void *)GetProcAddress(lib, "GetDpiForSystem");
 
 	if (sIs95Up) {
+		/* attempting this on Win 3.11 yields a message box */
 		if (!(lib = LoadLibrary("comctl32.dll")))
 			errWin(IDS_ELOADLIB);
 		sInitCommonControls = (void *)GetProcAddress(lib,
@@ -296,6 +297,12 @@ createControls(void)
 		LoadString(sInstance, sCtrlDefs[i].textRes, str, sizeof(str));
 
 		style = sCtrlDefs[i].style | WS_VISIBLE | WS_CHILD;
+
+		/*
+		 * Windows 3.11 doesn't have ES_EX_CLIENTEDGE, so use WS_BORDER.
+		 * Just applying WS_BORDER always doesn't work because that
+		 * yields double borders sometimes.
+		 */
 		if (!sIs95Up && (sCtrlDefs[i].exStyle & WS_EX_CLIENTEDGE))
 			style |= WS_BORDER;
 
@@ -667,6 +674,16 @@ static void
 updateDefBtn(void)
 {
 	WORD id;
+
+	/*
+	 * We want the 'Wake' button to be the default unless the cursor is in
+	 * the 'Name' field for favourites because then you expect to save.
+	 *
+	 * Default state is lost when a button gets focus. Once the button loses
+	 * focus again, it queries for what button should be the default
+	 * (using DM_GETDEFID). We want that same behaviour for any focus,
+	 * e.g. edit and list controls too, so that's what's implemented here.
+	 */
 
 	id = LOWORD(SendMessage(sWnd, DM_GETDEFID, 0, 0));
 	SendMessage(sWakeBtn, BM_SETSTYLE,
