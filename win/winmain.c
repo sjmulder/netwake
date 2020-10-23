@@ -420,7 +420,8 @@ static LRESULT CALLBACK
 wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
 	RECT *rectp, frame, client;
-	HWND focus;
+	HWND sender, focus;
+	WORD cmd, event;
 
 	switch (msg) {
 	case WM_SYSCOLORCHANGE:
@@ -462,35 +463,38 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 			return 0;
 
 	case WM_COMMAND:
+		sender = (HWND)lparam;
 		focus = GetFocus();
+		cmd = LOWORD(wparam);
+		event = HIWORD(wparam);
 
-		if ((HWND)lparam == sQuitBtn)
+		if (sender == sQuitBtn)
 			DestroyWindow(sWnd);
-		else if ((HWND)lparam == sWakeBtn)
+		else if (sender == sWakeBtn)
 			sendWol();
-		else if ((HWND)lparam == sFavList && HIWORD(wparam) == LBN_SELCHANGE)
+		else if (sender == sFavList && event == LBN_SELCHANGE)
 			loadFav();
-		else if ((HWND)lparam == sFavList && HIWORD(wparam) == LBN_DBLCLK) {
+		else if (sender == sFavList && event == LBN_DBLCLK) {
 			if (loadFav() != -1)
 				sendWol();
-		} else if ((HWND)lparam == sDelBtn)
+		} else if (sender == sDelBtn)
 			deleteFav();
-		else if ((HWND)lparam == sSaveBtn)
+		else if (sender == sSaveBtn)
 			saveFav();
-		else if (HIWORD(wparam) == EN_SETFOCUS || HIWORD(wparam) == LBN_SETFOCUS)
+		else if (event == EN_SETFOCUS || event == LBN_SETFOCUS)
 			updateDefBtn();
-		else if (lparam) /* accelerators from here on */
+		else if (sender) /* accelerators from here on */
 			break;
-		else if (LOWORD(wparam) == IDC_ENTER && focus == sMacField)
+		else if (cmd == IDC_ENTER && focus == sMacField)
 			sendWol();
-		else if (LOWORD(wparam) == IDC_ENTER && focus == sNameField)
+		else if (cmd == IDC_ENTER && focus == sNameField)
 			saveFav();
-		else if (LOWORD(wparam) == IDC_ENTER && focus == sFavList) {
+		else if (cmd == IDC_ENTER && focus == sFavList) {
 			if (loadFav() != -1)
 				sendWol();
-		} else if (LOWORD(wparam) == IDC_DELETE && focus == sFavList)
+		} else if (cmd == IDC_DELETE && focus == sFavList)
 			deleteFav();
-		else if (LOWORD(wparam) == IDC_DELETE) /* ugh */
+		else if (cmd == IDC_DELETE) /* ugh */
 			SendMessage(focus, WM_KEYDOWN, VK_DELETE, 0);
 		else
 			break;
