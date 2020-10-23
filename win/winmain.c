@@ -60,8 +60,8 @@ static const struct {
 	    WS_EX_CLIENTEDGE},
 	{&sFavLabel, 168, 98, 96, 17, "STATIC", "&Favourites:", 0, 0},
 	{&sFavList, 264, 96, 184, 140, "LISTBOX", NULL,
-	    WS_TABSTOP | WS_VSCROLL | LBS_SORT | LBS_NOINTEGRALHEIGHT,
-	    WS_EX_CLIENTEDGE},
+	    WS_TABSTOP | WS_VSCROLL | LBS_SORT | LBS_NOTIFY |
+	    LBS_NOINTEGRALHEIGHT, WS_EX_CLIENTEDGE},
 	{&sQuitBtn, 8, 240, 75, 23, "BUTTON", "&Quit", WS_TABSTOP, 0},
 	{&sDelBtn, 293, 240, 75, 23, "BUTTON", "&Delete",
 	    WS_TABSTOP | WS_DISABLED, 0},
@@ -232,8 +232,44 @@ saveFav(void)
 
 	RegCloseKey(key);
 
-	if (SendMessage(sFavList, LB_FINDSTRING, 0, name) == LB_ERR)
-		SendMessage(sFavList, LB_ADDSTRING, NULL, name);
+	if (SendMessage(sFavList, LB_FINDSTRING, 0, (LPARAM)name) == LB_ERR)
+		SendMessage(sFavList, LB_ADDSTRING, 0, (LPARAM)name);
+}
+
+static void
+loadFav(void)
+{
+	LRESULT idx, len;
+	char name[256], macStr[256];
+	HKEY key;
+	DWORD sz;
+
+	if ((idx = SendMessage(sFavList, LB_GETCURSEL, 0, 0)) == LB_ERR) {
+		EnableWindow(sDelBtn, FALSE);
+		return;
+	}
+
+	len = SendMessage(sFavList, LB_GETTEXTLEN, idx, 0);
+	if (!len || len >= sizeof(name))
+		err(1, "Invalid name.");
+	if (SendMessage(sFavList, LB_GETTEXT, idx, (LPARAM)name) == LB_ERR)
+		err(1, "LB_GETTEXT failed.");
+	name[len] = '\0';
+
+	if (RegOpenKeyEx(HKEY_CURRENT_USER, "SOFTWARE\\Netwake\\Favourites", 0,
+	    KEY_READ, &key) != ERROR_SUCCESS)
+		return;
+
+	sz = (DWORD)sizeof(macStr);
+	if (RegGetValue(key, NULL, name, RRF_RT_REG_SZ, NULL, (BYTE *)macStr, &sz)
+	    != ERROR_SUCCESS)
+		err(1, "RegGetValue() failed");
+
+	RegCloseKey(key);
+
+	SetWindowText(sMacField, macStr);
+	SetWindowText(sNameField, name);
+	EnableWindow(sDelBtn, TRUE);
 }
 
 static void
@@ -294,6 +330,8 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 			sendWol();
 		else if ((HWND)lparam == sSaveBtn)
 			saveFav();
+		else if ((HWND)lparam == sFavList && HIWORD(wparam) == LBN_SELCHANGE)
+			loadFav();
 		else
 			break;
 		return 0;
