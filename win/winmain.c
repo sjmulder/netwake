@@ -719,7 +719,6 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		frame.right += scale(sWndSize.right) - client.right;
 		frame.bottom += scale(sWndSize.bottom) - client.bottom;
 
-		AdjustWindowRect(&client, sWndStyle, FALSE);
 		MoveWindow(sWnd, frame.left, frame.top,
 		    frame.right - frame.left,
 		    frame.bottom - frame.top, TRUE);
