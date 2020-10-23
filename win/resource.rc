@@ -88,7 +88,7 @@ Example: d2:32:e4:87:85:24"
 	IDS_ENAMEREAD	"The favourite name could not be read."
 	IDS_ERESMISS	"A resource could not be loaded."
 	IDS_EREGCLASS	"The window class could not be registered."
-	IDS_ESHIMS	"A required DLL or function could not be loaded."
+	IDS_ECOMPAT	"A required DLL or function could not be loaded."
 }
 
 STRINGTABLE
@@ -130,5 +130,5 @@ Er is een fout opgetreden bij het schrijven naar het register."
 	IDS_ENAMEREAD	"De naam van de favoriet kon niet worden gelezen."
 	IDS_ERESMISS	"Een resource kon niet worden gelezen."
 	IDS_EREGCLASS	"De windowclass kon niet worden geregistreerd."
-	IDS_ESHIMS	"Een vereiste DLL of functie kon niet worden geladen."
+	IDS_ECOMPAT	"Een vereiste DLL of functie kon niet worden geladen."
 }

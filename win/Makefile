@@ -9,7 +9,7 @@ LDLIBS+=	-lkernel32 -luser32 -lgdi32 -ladvapi32 -lws2_32
 
 VPATH+=		../
 
-OBJS+=		winmain.o resource.o shims.o
+OBJS+=		winmain.o resource.o compat.o
 OBJS+=		wol.o util.o
 
 all: netwake.exe
@@ -28,9 +28,9 @@ netwake.fd: netwake.exe
 resource.o: resource.rc
 	$(RES) $(RESFLAGS) $< $@
 
-winmain.o:	wol.h util.h resource.h shims.h
+winmain.o:	wol.h util.h resource.h compat.h
 resource.o:	resource.h
-shims.o:	shims.h
+compat.o:	compat.h
 wol.o:		wol.h util.h
 
 .PHONY: all clean

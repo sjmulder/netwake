@@ -6,10 +6,7 @@
 #include "../util.h"
 #include "../wol.h"
 #include "resource.h"
-#include "shims.h"
-
-#define CPAT_WM_THEMECHANGED	0x031A
-#define CPAT_WM_DPICHANGED	0x02E0
+#include "compat.h"
 
 #define ID_WAKEBTN	101
 #define ID_SAVEBTN	102
@@ -414,7 +411,7 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 
 	switch (msg) {
 	case WM_SYSCOLORCHANGE:
-	case CPAT_WM_THEMECHANGED:
+	case WM_THEMECHANGED:
 		loadFont();
 		relayoutControls();
 
@@ -430,7 +427,7 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		    frame.bottom - frame.top, TRUE);
 		return 0;
 
-	case CPAT_WM_DPICHANGED:
+	case WM_DPICHANGED:
 		sDpi = HIWORD(wparam);
 		rectp = (RECT *)lparam;
 
@@ -511,12 +508,16 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 	
 	sInstance = instance;
 
-	if (ShimsInit() == -1)
-		err(IDS_ESHIMS);
+	if (CompatInit() == -1)
+		err(IDS_ECOMPAT);
 
 	setupWinsock();
-	InitCommonControls();
-	sBaseDpi = sDpi = GetDpiForSystem();
+
+	if (InitCommonControls)
+		InitCommonControls();
+	if (GetDpiForSystem)
+		sBaseDpi = sDpi = GetDpiForSystem();
+
 	loadFont();
 
 	accel = LoadAccelerators(sInstance, MAKEINTRESOURCE(IDA_ACCELS));
