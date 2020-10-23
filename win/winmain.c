@@ -44,7 +44,7 @@ static const struct {
 	{&sMacField, 264, 8, 160, 21, "EDIT", NULL, WS_TABSTOP,
 	    WS_EX_CLIENTEDGE},
 	{&sWakeBtn, 349, 32, 75, 23, "BUTTON", "&Wake", WS_TABSTOP, 0},
-	{&sNameLabel, 176, 74, 96, 17, "STATIC", "&Name:", 0, 0},
+	{&sNameLabel, 168, 74, 96, 17, "STATIC", "&Name:", 0, 0},
 	{&sNameField, 264, 72, 160, 21, "EDIT", NULL, WS_TABSTOP ,
 	    WS_EX_CLIENTEDGE},
 	{&sFavLabel, 168, 98, 96, 17, "STATIC", "&Favourites:", 0, 0},
