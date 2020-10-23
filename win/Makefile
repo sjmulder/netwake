@@ -11,11 +11,17 @@ VPATH+=		../
 
 all: netwake.exe
 
+dist: netwake.zip netwake.fd
+
 clean:
-	rm -f netwake.exe netwake.fd *.o *.tmp
+	rm -f netwake.exe netwake.zip netwake.fd *.o *.tmp
 
 netwake.exe: winmain.o resource.o wol.o
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+netwake.zip: netwake.exe README.md LICENSE.md
+	rm -f netwake.zip
+	zip -q netwake.zip $^
 
 netwake.fd: netwake.exe README.md LICENSE.md
 	dd if=/dev/zero of=netwake.fd.tmp bs=1440K count=1 status=none
@@ -30,4 +36,4 @@ winmain.o:	wol.h resource.h
 wol.o:		wol.h
 resource.o:	resource.h
 
-.PHONY: all clean
+.PHONY: all dist clean
