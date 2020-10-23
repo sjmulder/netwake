@@ -161,7 +161,7 @@ parseMac(const char *str, tMacAddr *mac)
 	ZeroMemory(mac, sizeof(*mac));
 
 	for (inPos=0; str[inPos]; inPos++) {
-		if (outPos >= LEN(mac->bytes)*2)
+		if (outPos >= (int)LEN(mac->bytes)*2)
 			return -1;
 		else if ((c = str[inPos]) == ':')
 			continue;
@@ -175,7 +175,7 @@ parseMac(const char *str, tMacAddr *mac)
 		outPos++;
 	}
 
-	if (outPos < LEN(mac->bytes)*2)
+	if (outPos < (int)LEN(mac->bytes)*2)
 		return -1;
 
 	return 0;
@@ -186,7 +186,8 @@ sendWol(void)
 {
 	char buf[256];
 	tMacAddr mac;
-	int sock, i;
+	int i;
+	SOCKET sock;
 	tWolPacket wol;
 	struct addrinfo hints, *addr;
 
