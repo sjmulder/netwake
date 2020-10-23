@@ -88,6 +88,8 @@ Example: d2:32:e4:87:85:24"
 	IDS_ENAMEREAD	"The favourite name could not be read."
 	IDS_ERESMISS	"A resource could not be loaded:"
 	IDS_EREGCLASS	"The window class could not be registered:"
+	IDS_EINIWRITE	"An error occured while writing to netwake.ini:"
+	IDS_EINIREAD	"An error occured while reading from netwake.ini:"
 }
 
 STRINGTABLE
@@ -129,4 +131,8 @@ Er is een fout opgetreden bij het schrijven naar het register:"
 	IDS_ENAMEREAD	"De naam van de favoriet kon niet worden gelezen."
 	IDS_ERESMISS	"Een resource kon niet worden gelezen:"
 	IDS_EREGCLASS	"De windowclass kon niet worden geregistreerd:"
+	IDS_EINIWRITE	"\
+Er is een fout opgetreden bij het schrijven naar netwake.ini:"
+	IDS_EINIREAD	"\
+Er is een fout opgetreden bij het lezen uit netwake.ini."
 }

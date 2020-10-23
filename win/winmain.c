@@ -315,10 +315,31 @@ relayoutControls(void)
 }
 
 static void
-loadPrefs(void)
+loadPrefsIni(void)
+{
+	char buf[1024], *name;
+
+	buf[0] = '\0';
+
+	GetPrivateProfileString("Main", "LastAddress", NULL, buf, sizeof(buf),
+	    "netwake.ini");
+	SetWindowText(sMacField, buf);
+	SendMessage(sMacField, EM_SETSEL, (WPARAM)0, (LPARAM)-1);
+
+	buf[0] = '\0';
+	buf[1] = '\0';
+	GetPrivateProfileString("Favourites", NULL, NULL, buf, sizeof(buf),
+	    "netwake.ini");
+
+	for (name = buf; *name; name += strlen(name)+1)
+		SendMessage(sFavList, LB_ADDSTRING, 0, (LPARAM)name);
+}
+
+static void
+loadPrefsReg(void)
 {
 	HKEY key;
-	char macStr[256], name[256];
+	char buf[256];
 	DWORD sz, type, i;
 	LONG lret;
 
@@ -327,26 +348,26 @@ loadPrefs(void)
 	if (lret != ERROR_SUCCESS)
 		return;
 
-	sz = (DWORD)sizeof(macStr);
-	lret = RegQueryValueEx(key, "LastAddress", NULL, &type, (BYTE *)macStr,
+	sz = (DWORD)sizeof(buf);
+	lret = RegQueryValueEx(key, "LastAddress", NULL, &type, (BYTE *)buf,
 	    &sz);
 	if (lret == ERROR_SUCCESS && type == REG_SZ) {
-		SetWindowText(sMacField, macStr);
+		SetWindowText(sMacField, buf);
 		SendMessage(sMacField, EM_SETSEL, (WPARAM)0, (LPARAM)-1);
 	}
 
 	RegCloseKey(key);
 
-	lret = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Netwake\\Favourites", 0,
-	    KEY_READ, &key);
+	lret = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Netwake\\Favourites",
+	    0, KEY_READ, &key);
 	if (lret != ERROR_SUCCESS)
 		return;
 
 	for (i=0; ; i++) {
-		sz = (DWORD)sizeof(name);
-		lret = RegEnumValue(key, i, name, &sz, NULL, NULL, NULL, NULL);
+		sz = (DWORD)sizeof(buf);
+		lret = RegEnumValue(key, i, buf, &sz, NULL, NULL, NULL, NULL);
 		if (lret == ERROR_SUCCESS)
-			SendMessage(sFavList, LB_ADDSTRING, 0, (LPARAM)name);
+			SendMessage(sFavList, LB_ADDSTRING, 0, (LPARAM)buf);
 		else if (lret == ERROR_NO_MORE_ITEMS)
 			break;
 		else {
@@ -359,12 +380,82 @@ loadPrefs(void)
 }
 
 static void
+loadPrefs(void)
+{
+	if (sIs95Up)
+		loadPrefsReg();
+	else
+		loadPrefsIni();
+}
+
+static void
+saveLastMac(const char *val)
+{
+	LONG lret;
+	HKEY key;
+
+	if (sIs95Up) {
+		lret = RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\Netwake",
+		    0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL,
+		    &key, NULL);
+		if (lret != ERROR_SUCCESS)
+			return;
+
+		RegSetValueEx(key, "LastAddress", 0, REG_SZ, (BYTE *)val,
+		    strlen(val)+1);
+		RegCloseKey(key);
+	} else {
+		WritePrivateProfileString("Main", "LastAddress", val,
+		     "netwake.ini");
+	}
+}
+
+static int
+saveFavReg(const char *name, const char *val)
+{
+	LONG lret;
+	HKEY key;
+
+	lret = RegCreateKeyExA(HKEY_CURRENT_USER,
+	    "Software\\Netwake\\Favourites", 0, NULL, REG_OPTION_NON_VOLATILE,
+	    KEY_ALL_ACCESS, NULL, &key, NULL);
+	if (lret != ERROR_SUCCESS) {
+		warnWin(IDS_EREGWRITE);
+		RegCloseKey(key);
+		return -1;
+	}
+
+	lret = RegSetValueEx(key, name, 0, REG_SZ, (BYTE *)val, strlen(val)+1);
+	if (lret != ERROR_SUCCESS) {
+		warnWin(IDS_EREGWRITE);
+		RegCloseKey(key);
+		return -1;
+	}
+
+	RegCloseKey(key);
+	return 0;
+}
+
+static int
+saveFavIni(const char *name, const char *val)
+{
+	BOOL bret;
+
+	bret = WritePrivateProfileString("Favourites", name, val,
+	    "netwake.ini");
+	if (!bret) {
+		warnWin(IDS_EINIWRITE);
+		return -1;
+	}
+
+	return 0;
+}
+
+static void
 saveFav(void)
 {
 	char macStr[256], name[256];
 	tMacAddr mac;
-	HKEY key;
-	LONG lret;
 
 	GetWindowText(sMacField, macStr, sizeof(macStr));
 	GetWindowText(sNameField, name, sizeof(name));
@@ -382,39 +473,65 @@ saveFav(void)
 	FormatMacAddr(&mac, macStr);
 	SetWindowText(sMacField, macStr);
 
-	lret = RegCreateKeyExA(HKEY_CURRENT_USER,
-	    "Software\\Netwake\\Favourites", 0, NULL, REG_OPTION_NON_VOLATILE,
-	    KEY_ALL_ACCESS, NULL, &key, NULL);
-	if (lret != ERROR_SUCCESS) {
-		warnWin(IDS_EREGWRITE);
-		RegCloseKey(key);
-		return;
+	if (sIs95Up) {
+		if (saveFavReg(name, macStr) == -1)
+			return;
+	} else {
+		if (saveFavIni(name, macStr) == -1)
+			return;
 	}
-
-	lret = RegSetValueEx(key, name, 0, REG_SZ, (BYTE *)macStr,
-	    strlen(macStr)+1);
-	if (lret != ERROR_SUCCESS) {
-		warnWin(IDS_EREGWRITE);
-		RegCloseKey(key);
-		return;
-	}
-
-	RegCloseKey(key);
 
 	if (SendMessage(sFavList, LB_FINDSTRING, 0, (LPARAM)name) == LB_ERR)
 		SendMessage(sFavList, LB_ADDSTRING, 0, (LPARAM)name);
 }
 
 static int
+loadFavReg(const char *name, char *val, size_t sz)
+{
+	LONG lret;
+	HKEY key;
+	DWORD sz2, type;
+
+	lret = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Netwake\\Favourites",
+	    0, KEY_READ, &key);
+	if (lret != ERROR_SUCCESS)
+		return -1;
+
+	sz2 = sz;
+	lret = RegQueryValueEx(key, name, NULL, &type, (BYTE *)val, &sz2);
+	if (lret != ERROR_SUCCESS || type != REG_SZ) {
+		warnWin(IDS_EREGREAD);
+		RegCloseKey(key);
+		return -1;
+	}
+
+	RegCloseKey(key);
+	return 0;
+}
+
+static int
+loadFavIni(const char *name, char *val, size_t sz)
+{
+	val[0] = '\0';
+
+	GetPrivateProfileString("Favourites", name, NULL, val, sz,
+	    "netwake.ini");
+	if (!val[0]) {
+		warn(IDS_EINIREAD);
+		return -1;
+	}
+
+	return 0;
+}
+
+static int
 loadFav(void)
 {
 	LRESULT idx, len;
-	LONG lret;
 	char name[256], macStr[256];
-	HKEY key;
-	DWORD sz, type;
 
 	if ((idx = SendMessage(sFavList, LB_GETCURSEL, 0, 0)) == LB_ERR) {
+		MessageBox(NULL, "No selection", NULL, MB_OK);
 		EnableWindow(sDelBtn, FALSE);
 		return -1;
 	}
@@ -432,20 +549,13 @@ loadFav(void)
 
 	name[len] = '\0';
 
-	lret = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Netwake\\Favourites", 0,
-	    KEY_READ, &key);
-	if (lret != ERROR_SUCCESS)
-		return -1;
-
-	sz = (DWORD)sizeof(macStr);
-	lret = RegQueryValueEx(key, name, NULL, &type, (BYTE *)macStr, &sz);
-	if (lret != ERROR_SUCCESS || type != REG_SZ) {
-		warnWin(IDS_EREGREAD);
-		RegCloseKey(key);
-		return -1;
+	if (sIs95Up) {
+		if (loadFavReg(name, macStr, sizeof(macStr)) == -1)
+			return -1;
+	} else {
+		if (loadFavIni(name, macStr, sizeof(macStr)) == -1)
+			return -1;
 	}
-
-	RegCloseKey(key);
 
 	SetWindowText(sMacField, macStr);
 	SetWindowText(sNameField, name);
@@ -454,13 +564,45 @@ loadFav(void)
 	return 0;
 }
 
+static int
+deleteFavReg(const char *name)
+{
+	LONG lret;
+	HKEY key;
+
+	lret = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Netwake\\Favourites",
+	    0, KEY_SET_VALUE, &key);
+	if (lret != ERROR_SUCCESS ||
+	    RegDeleteValue(key, name) != ERROR_SUCCESS) {
+		warnWin(IDS_EREGWRITE);
+		RegCloseKey(key);
+		return -1;
+	}
+
+	RegCloseKey(key);
+	return 0;
+}
+
+static int
+deleteFavIni(const char *name)
+{
+	BOOL bret;
+
+	bret = WritePrivateProfileString("Favourites", name, NULL,
+	    "netwake.ini");
+	if (!bret) {
+		warnWin(IDS_EINIWRITE);
+		return -1;
+	}
+
+	return 0;
+}
+
 static void
 deleteFav()
 {
 	LRESULT idx, len;
-	LONG lret;
 	char name[256];
-	HKEY key;
 
 	if ((idx = SendMessage(sFavList, LB_GETCURSEL, 0, 0)) == LB_ERR) {
 		EnableWindow(sDelBtn, FALSE);
@@ -480,16 +622,13 @@ deleteFav()
 
 	name[len] = '\0';
 
-	lret = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Netwake\\Favourites",
-	    0, KEY_SET_VALUE, &key);
-	if (lret != ERROR_SUCCESS ||
-	    RegDeleteValue(key, name) != ERROR_SUCCESS) {
-		warnWin(IDS_EREGWRITE);
-		RegCloseKey(key);
-		return;
+	if (sIs95Up) {
+		if (deleteFavReg(name) == -1)
+			return;
+	} else {
+		if (deleteFavIni(name) == -1)
+			return;
 	}
-
-	RegCloseKey(key);
 
 	SendMessage(sFavList, LB_DELETESTRING, idx, 0);
 	EnableWindow(sDelBtn, FALSE);
@@ -500,8 +639,6 @@ sendWol(void)
 {
 	char buf[256];
 	tMacAddr mac;
-	HKEY key;
-	LONG lret;
 
 	GetWindowText(sMacField, buf, sizeof(buf));
 
@@ -519,14 +656,7 @@ sendWol(void)
 	}
 
 	info(IDS_WOLSENT);
-
-	lret = RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\Netwake", 0, NULL,
-	    REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, NULL);
-	if (lret == ERROR_SUCCESS) {
-		RegSetValueEx(key, "LastAddress", 0, REG_SZ, (BYTE *)buf,
-		    strlen(buf)+1);
-		RegCloseKey(key);
-	}
+	saveLastMac(buf);
 }
 
 static void
