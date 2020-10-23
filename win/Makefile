@@ -14,7 +14,7 @@ all: netwake.exe
 clean:
 	rm -f netwake.exe netwake.fd *.o *.tmp
 
-netwake.exe: winmain.o resource.o wol.o util.o
+netwake.exe: winmain.o resource.o wol.o
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 netwake.fd: netwake.exe
