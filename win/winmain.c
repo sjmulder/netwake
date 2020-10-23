@@ -2,7 +2,6 @@
 
 #include <windows.h>
 #include <winsock2.h>
-#include <ws2tcpip.h>
 #include <commctrl.h>
 
 #define CPAT_WM_THEMECHANGED	0x031A
@@ -185,11 +184,11 @@ static void
 sendWol(void)
 {
 	char buf[256];
-	tMacAddr mac;
 	int i;
-	SOCKET sock;
+	tMacAddr mac;
 	tWolPacket wol;
-	struct addrinfo hints, *addr;
+	struct sockaddr_in addr;
+	SOCKET sock;
 
 	GetWindowText(sMacField, buf, sizeof(buf));
 
@@ -208,23 +207,20 @@ sendWol(void)
 	for (i=0; i < (int)LEN(wol.macs); i++)
 		wol.macs[i] = mac;
 
-	ZeroMemory(&hints, sizeof(hints));
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_DGRAM;
-	hints.ai_protocol = IPPROTO_UDP;
+	ZeroMemory(&addr, sizeof(addr));
+	addr.sin_family = AF_INET;
+	addr.sin_port = 9;
+	addr.sin_addr.S_un.S_addr = 0xFFFFFFFF;
 
-	if (getaddrinfo("255.255.255.255", "9", &hints, &addr))
-		err("getaddrinfo() failed");
-	if ((sock = socket(addr->ai_family, addr->ai_socktype,
-	    addr->ai_protocol)) == INVALID_SOCKET)
+	if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET)
 		err("socket() failed");
-	if (connect(sock, addr->ai_addr, addr->ai_addrlen) == SOCKET_ERROR)
+	if (connect(sock, (struct sockaddr *)&addr, sizeof(addr))
+	    == SOCKET_ERROR)
 		err("connect() failed");
 	if (send(sock, (void *)&wol, sizeof(wol), 0) == SOCKET_ERROR)
 		err("send() failed");
 
 	closesocket(sock);
-	freeaddrinfo(addr);
 
 	MessageBox(sWnd, "Wake-On-Lan packet sent!", "Netwake",
 	    MB_ICONINFORMATION | MB_OK);
