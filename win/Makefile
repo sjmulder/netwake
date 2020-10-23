@@ -3,7 +3,7 @@ RES=	i686-w64-mingw32-windres
 
 CFLAGS+=	-O2 -Wall -Wextra
 LDFLAGS+=	-mwindows
-LDLIBS+=	-lkernel32 -luser32 -lgdi32 -lcomctl32
+LDLIBS+=	-lkernel32 -luser32 -lgdi32 -lcomctl32 -lws2_32
 
 all: netwake.exe
 
