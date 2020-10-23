@@ -98,6 +98,7 @@ setupWinsock(void)
 static void
 applySystemFont(void)
 {
+	BOOL bret;
 	NONCLIENTMETRICS metrics;
 	LOGFONT *lfont;
 	int i;
@@ -108,8 +109,9 @@ applySystemFont(void)
 	ZeroMemory(&metrics, sizeof(metrics));
 	metrics.cbSize = sizeof(metrics);
 
-	if (!SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(metrics),
-	    &metrics, 0))
+	bret = SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(metrics),
+	    &metrics, 0);
+	if (!bret)
 		err(1, "SystemParametersInfo failed");
 
 	lfont = &metrics.lfMessageFont;
@@ -163,31 +165,34 @@ loadPrefs(void)
 	HKEY key;
 	char macStr[256], name[256];
 	DWORD sz, i;
-	LSTATUS res;
+	LSTATUS ls;
 
-	if (RegOpenKeyEx(HKEY_CURRENT_USER, "SOFTWARE\\Netwake", 0, KEY_READ,
-	    &key) != ERROR_SUCCESS)
+	ls = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Netwake", 0,
+	    KEY_READ, &key);
+	if (ls != ERROR_SUCCESS)
 		return;
 
 	sz = (DWORD)sizeof(macStr);
-	if (RegGetValue(key, NULL, "LastAddress", RRF_RT_REG_SZ, NULL,
-	    (BYTE *)macStr, &sz) == ERROR_SUCCESS) {
+	ls = RegGetValue(key, NULL, "LastAddress", RRF_RT_REG_SZ, NULL,
+	    (BYTE*)macStr, &sz);
+	if (ls == ERROR_SUCCESS) {
 		SetWindowText(sMacField, macStr);
 		SendMessage(sMacField, EM_SETSEL, (WPARAM)0, (LPARAM)-1);
 	}
 
 	RegCloseKey(key);
 
-	if (RegOpenKeyEx(HKEY_CURRENT_USER, "SOFTWARE\\Netwake\\Favourites", 0, KEY_READ,
-	    &key) != ERROR_SUCCESS)
+	ls = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Netwake\\Favourites", 0,
+	    KEY_READ, &key);
+	if (ls != ERROR_SUCCESS)
 		return;
 
 	for (i=0; ; i++) {
 		sz = (DWORD)sizeof(name);
-		res = RegEnumValue(key, i, name, &sz, NULL, NULL, NULL, NULL);
-		if (res == ERROR_SUCCESS)
+		ls = RegEnumValue(key, i, name, &sz, NULL, NULL, NULL, NULL);
+		if (ls == ERROR_SUCCESS)
 			SendMessage(sFavList, LB_ADDSTRING, 0, (LPARAM)name);
-		else if (res == ERROR_NO_MORE_ITEMS)
+		else if (ls == ERROR_NO_MORE_ITEMS)
 			break;
 		else
 			err(1, "RegEnumValue() failed");
@@ -202,6 +207,7 @@ saveFav(void)
 	char macStr[256], name[256];
 	tMacAddr mac;
 	HKEY key;
+	LSTATUS ls;
 
 	GetWindowText(sMacField, macStr, sizeof(macStr));
 	GetWindowText(sNameField, name, sizeof(name));
@@ -221,13 +227,14 @@ saveFav(void)
 	FormatMacAddr(&mac, macStr);
 	SetWindowText(sMacField, macStr);
 
-	if (RegCreateKeyExA(HKEY_CURRENT_USER, "SOFTWARE\\Netwake\\Favourites",
-	    0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, NULL)
-	    != ERROR_SUCCESS)
+	ls = RegCreateKeyExA(HKEY_CURRENT_USER,
+	    "Software\\Netwake\\Favourites", 0, NULL, REG_OPTION_NON_VOLATILE,
+	    KEY_ALL_ACCESS, NULL, &key, NULL);
+	if (ls != ERROR_SUCCESS)
 		err(1, "RegCreateKeyExA() failed");
 
-	if (RegSetValueEx(key, name, 0, REG_SZ, macStr, strlen(macStr)+1)
-	    != ERROR_SUCCESS)
+	ls = RegSetValueEx(key, name, 0, REG_SZ, macStr, strlen(macStr)+1);
+	if (ls != ERROR_SUCCESS)
 		err(1, "RegSetValueEx() failed");
 
 	RegCloseKey(key);
@@ -240,6 +247,7 @@ static void
 loadFav(void)
 {
 	LRESULT idx, len;
+	LSTATUS ls;
 	char name[256], macStr[256];
 	HKEY key;
 	DWORD sz;
@@ -256,13 +264,14 @@ loadFav(void)
 		err(1, "LB_GETTEXT failed.");
 	name[len] = '\0';
 
-	if (RegOpenKeyEx(HKEY_CURRENT_USER, "SOFTWARE\\Netwake\\Favourites", 0,
-	    KEY_READ, &key) != ERROR_SUCCESS)
+	ls = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Netwake\\Favourites", 0,
+	    KEY_READ, &key);
+	if (ls != ERROR_SUCCESS)
 		return;
 
 	sz = (DWORD)sizeof(macStr);
-	if (RegGetValue(key, NULL, name, RRF_RT_REG_SZ, NULL, (BYTE *)macStr, &sz)
-	    != ERROR_SUCCESS)
+	ls = RegGetValue(key, NULL, name, RRF_RT_REG_SZ, NULL, (BYTE*)macStr, &sz);
+	if (ls != ERROR_SUCCESS)
 		err(1, "RegGetValue() failed");
 
 	RegCloseKey(key);
@@ -276,6 +285,7 @@ static void
 deleteFav()
 {
 	LRESULT idx, len;
+	LSTATUS ls;
 	char name[256];
 	HKEY key;
 
@@ -291,8 +301,9 @@ deleteFav()
 		err(1, "LB_GETTEXT failed.");
 	name[len] = '\0';
 
-	if (RegOpenKeyEx(HKEY_CURRENT_USER, "SOFTWARE\\Netwake\\Favourites", 0,
-	    KEY_SET_VALUE, &key) != ERROR_SUCCESS)
+	ls = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Netwake\\Favourites", 0,
+	    KEY_SET_VALUE, &key);
+	if (ls != ERROR_SUCCESS)
 		err(1, "RegOpenKeyEx() failed.");
 	if (RegDeleteValue(key, name) != ERROR_SUCCESS)
 		err(1, "RegDeleteValue() failed.");
@@ -308,6 +319,7 @@ sendWol(void)
 	char buf[256];
 	tMacAddr mac;
 	HKEY key;
+	LSTATUS ls;
 
 	GetWindowText(sMacField, buf, sizeof(buf));
 
@@ -324,9 +336,9 @@ sendWol(void)
 	MessageBox(sWnd, "Wake-on-LAN packet sent!", "Netwake",
 	    MB_ICONINFORMATION | MB_OK);
 
-	if (RegCreateKeyExA(HKEY_CURRENT_USER, "SOFTWARE\\Netwake", 0, NULL,
-	    REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, NULL)
-	    == ERROR_SUCCESS) {
+	ls = RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\Netwake", 0, NULL,
+	    REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, NULL);
+	if (ls == ERROR_SUCCESS) {
 		RegSetValueEx(key, "LastAddress", 0, REG_SZ, (BYTE *)buf,
 		    strlen(buf)+1);
 		RegCloseKey(key);
