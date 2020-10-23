@@ -4,6 +4,49 @@
 #define CPAT_CREATEPROCESS_MANIFEST_RESOURCE_ID 1
 #define CPAT_RT_MANIFEST 24
 
+#define VER	0,1,0,0
+#define VERSTR	"0.1"
+
+VS_VERSION_INFO	VERSIONINFO
+	FILEVERSION     VER
+	PRODUCTVERSION  VER
+#if DEBUG
+	FILEFLAGS       VS_FF_PRERELEASE
+#endif
+	FILEOS          VOS__WINDOWS32
+	FILETYPE        VFT_APP
+{
+	BLOCK "StringFileInfo" {
+		/* English */
+		BLOCK "000904b0" {
+			VALUE "CompanyName",      "Sijmen J. Mulder"
+			VALUE "FileVersion",      VERSTR
+			VALUE "LegalCopyright",   "© 2020 Sijmen J. Mulder"
+			VALUE "ProductName",      "Netwake"
+			VALUE "ProductVersion",   VERSTR
+			VALUE "FileDescription",  "Wake-on-LAN utility"
+			VALUE "InternalName",     "Netwake"
+			VALUE "OriginalFilename", "Netwake.exe"
+		}
+
+		/* Dutch */
+		BLOCK "001304b0" {
+			VALUE "CompanyName",      "Sijmen J. Mulder"
+			VALUE "FileVersion",      VERSTR
+			VALUE "LegalCopyright",   "© 2020 Sijmen J. Mulder"
+			VALUE "ProductName",      "Netwake"
+			VALUE "ProductVersion",   VERSTR
+			VALUE "FileDescription",  "Wake-on-LAN-utility"
+			VALUE "InternalName",     "Netwake"
+			VALUE "OriginalFilename", "Netwake.exe"
+		}
+	}
+
+	BLOCK "VarFileInfo" {
+		VALUE "Translation", LANG_ENGLISH, 1200, LANG_DUTCH, 1200
+	}
+}
+
 CPAT_CREATEPROCESS_MANIFEST_RESOURCE_ID CPAT_RT_MANIFEST "netwake.exe.manifest"
 
 IDA_ACCELS ACCELERATORS {
