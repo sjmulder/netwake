@@ -149,13 +149,12 @@ relayout(void)
 		    MulDiv(sCtrlDefs[i].h, sDpi, 96), TRUE);
 }
 
-
-
 static void
 sendWol(void)
 {
 	char buf[256];
 	tMacAddr mac;
+	HKEY key;
 
 	GetWindowText(sMacField, buf, sizeof(buf));
 
@@ -168,6 +167,8 @@ sendWol(void)
 		return;
 	}
 
+	FormatMacAddr(&mac, buf);
+	SetWindowText(sMacField, buf);
 	SendWolPacket(&mac);
 
 	MessageBox(sWnd, "Wake-on-LAN packet sent!", "Netwake",

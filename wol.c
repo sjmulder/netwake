@@ -37,6 +37,20 @@ ParseMacAddr(const char *str, tMacAddr *mac)
 }
 
 void
+FormatMacAddr(const tMacAddr *mac, char *str)
+{
+	int i;
+
+	for (i=0; i < (int)LEN(mac->bytes); i++) {
+		str[i*3+0] = "0123456789abcdef"[(mac->bytes[i] & 0xF0) >> 4];
+		str[i*3+1] = "0123456789abcdef"[(mac->bytes[i] & 0x0F)];
+		str[i*3+2] = ':';
+	}
+
+	str[i*3-1] = '\0';
+}
+
+void
 SendWolPacket(const tMacAddr *mac)
 {
 	int i;
