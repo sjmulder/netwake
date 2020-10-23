@@ -23,6 +23,12 @@ static const char sInfoText[] =
 "By Sijmen J. Mulder\r\n"
 "Contact: ik@sjmulder.nl";
 
+static const char sBadMacText[] =
+"Invalid MAC address.\r\n\r\n"
+"The address should consist of 8 pairs of hexadecimal digits (0-A), "
+"optionally separated by colons.\r\n\r\n"
+"Example: d2:32:e4:87:85:24";
+
 static HINSTANCE sInstance;
 static HFONT sFont;
 static WORD sBaseDpi = 96, sDpi = 96;
@@ -54,9 +60,10 @@ static const struct {
 	    WS_EX_CLIENTEDGE},
 	{&sFavLabel, 168, 98, 96, 17, "STATIC", "&Favourites:", 0, 0},
 	{&sFavList, 264, 96, 184, 140, "LISTBOX", NULL,
-	    WS_TABSTOP | LBS_NOINTEGRALHEIGHT, WS_EX_CLIENTEDGE},
+	    WS_TABSTOP | LBS_SORT | LBS_NOINTEGRALHEIGHT, WS_EX_CLIENTEDGE},
 	{&sQuitBtn, 8, 240, 75, 23, "BUTTON", "&Quit", WS_TABSTOP, 0},
-	{&sDelBtn, 293, 240, 75, 23, "BUTTON", "&Delete", WS_TABSTOP, 0},
+	{&sDelBtn, 293, 240, 75, 23, "BUTTON", "&Delete",
+	    WS_TABSTOP | WS_DISABLED, 0},
 	{&sSaveBtn, 373, 240, 75, 23, "BUTTON", "&Save", WS_TABSTOP, 0}
 };
 
@@ -171,6 +178,46 @@ loadPrefs(void)
 }
 
 static void
+saveFav(void)
+{
+	char macStr[256], name[256];
+	tMacAddr mac;
+	HKEY key;
+
+	GetWindowText(sMacField, macStr, sizeof(macStr));
+	GetWindowText(sNameField, name, sizeof(name));
+
+	if (!strlen(macStr) || !strlen(name)) {
+		MessageBox(sWnd, "Enter a MAC and a name first to save it.",
+		    "Netwake", MB_ICONEXCLAMATION | MB_OK);
+		return;
+	}
+
+	if (ParseMacAddr(macStr, &mac) == -1) {
+		MessageBox(sWnd, sBadMacText, "Netwake",
+		    MB_ICONEXCLAMATION | MB_OK);
+		return;
+	}
+
+	FormatMacAddr(&mac, macStr);
+	SetWindowText(sMacField, macStr);
+
+	if (RegCreateKeyExA(HKEY_CURRENT_USER, "SOFTWARE\\Netwake\\Favourites",
+	    0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, NULL)
+	    != ERROR_SUCCESS)
+		err(1, "RegCreateKeyExA() failed");
+
+	if (RegSetValueEx(key, name, 0, REG_SZ, macStr, strlen(macStr)+1)
+	    != ERROR_SUCCESS)
+		err(1, "RegSetValueEx() failed");
+
+	RegCloseKey(key);
+
+	if (SendMessage(sFavList, LB_FINDSTRING, 0, name) == LB_ERR)
+		SendMessage(sFavList, LB_ADDSTRING, NULL, name);
+}
+
+static void
 sendWol(void)
 {
 	char buf[256];
@@ -180,10 +227,7 @@ sendWol(void)
 	GetWindowText(sMacField, buf, sizeof(buf));
 
 	if (ParseMacAddr(buf, &mac) == -1) {
-		MessageBox(sWnd, "Invalid MAC address.\r\n\r\n"
-		    "The address should consist of 8 pairs of hexadecimal "
-		    "digits (0-A), optionally separated by colons.\r\n\r\n"
-		    "Example: d2:32:e4:87:85:24", "Netwake",
+		MessageBox(sWnd, sBadMacText, "Netwake",
 		    MB_ICONEXCLAMATION | MB_OK);
 		return;
 	}
@@ -229,6 +273,8 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 			DestroyWindow(sWnd);
 		else if ((HWND)lparam == sWakeBtn)
 			sendWol();
+		else if ((HWND)lparam == sSaveBtn)
+			saveFav();
 		else
 			break;
 		return 0;
