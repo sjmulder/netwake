@@ -3,7 +3,7 @@ Microsoft Developer Studio Workspace File, Format Version 6.00
 
 ###############################################################################
 
-Project: "netwake"=.\netwake.dsp - Package Owner=<4>
+Project: "netwake"=.\win\netwake.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
