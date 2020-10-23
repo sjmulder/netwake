@@ -20,7 +20,7 @@ static const DWORD sWndStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU |
 static const RECT sWndSize = {0, 0, 456, 272};
 
 static const char sInfoText[] =
-"Turn on a computer by sending it a Wake-On-Lan packet.\r\n\r\n"
+"Turn on a computer by sending it a Wake-on-LAN packet.\r\n\r\n"
 "The computer must be on the same network and have WOL enabled in its "
 "firmware.\r\n\r\n"
 "By Sijmen J. Mulder\r\n"
@@ -222,7 +222,7 @@ sendWol(void)
 
 	closesocket(sock);
 
-	MessageBox(sWnd, "Wake-On-Lan packet sent!", "Netwake",
+	MessageBox(sWnd, "Wake-on-LAN packet sent!", "Netwake",
 	    MB_ICONINFORMATION | MB_OK);
 }
 
