@@ -1,5 +1,5 @@
-CC=	i686-w64-mingw32-gcc
-RES=	i686-w64-mingw32-windres
+CC=		i686-w64-mingw32-gcc
+RES=		i686-w64-mingw32-windres
 
 CFLAGS+=	-Os -Wall -Wextra
 LDFLAGS+=	-mwindows -s
