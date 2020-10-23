@@ -386,7 +386,7 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 			deleteFav();
 		else if ((HWND)lparam == sSaveBtn)
 			saveFav();
-		else if (lparam)
+		else if (lparam) /* accelerators from here on */
 			break;
 		else if (LOWORD(wparam) == IDC_ENTER && focus == sMacField)
 			sendWol();
@@ -395,8 +395,7 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		else if (LOWORD(wparam) == IDC_ENTER && focus == sFavList) {
 			if (loadFav() != -1)
 				sendWol();
-		}
-		else if (LOWORD(wparam) == IDC_DELETE && focus == sFavList)
+		} else if (LOWORD(wparam) == IDC_DELETE && focus == sFavList)
 			deleteFav();
 		else if (LOWORD(wparam) == IDC_DELETE) /* ugh */
 			SendMessage(focus, WM_KEYDOWN, VK_DELETE, 0);
