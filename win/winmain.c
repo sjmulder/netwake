@@ -123,10 +123,10 @@ createControls(void)
 		    sCtrlDefs[i].exStyle,
 		    sCtrlDefs[i].className, sCtrlDefs[i].text,
 		    sCtrlDefs[i].style | WS_VISIBLE | WS_CHILD,
-		    MulDiv(sCtrlDefs[i].x, -lfont->lfHeight, 12),
-		    MulDiv(sCtrlDefs[i].y, -lfont->lfHeight, 12),
-		    MulDiv(sCtrlDefs[i].w, -lfont->lfHeight, 12),
-		    MulDiv(sCtrlDefs[i].h, -lfont->lfHeight, 12),
+		    MulDiv(sCtrlDefs[i].x, -lfont->lfHeight, 11),
+		    MulDiv(sCtrlDefs[i].y, -lfont->lfHeight, 11),
+		    MulDiv(sCtrlDefs[i].w, -lfont->lfHeight, 11),
+		    MulDiv(sCtrlDefs[i].h, -lfont->lfHeight, 11),
 		    sWnd, NULL, sInstance, NULL);
 
 		if (!*sCtrlDefs[i].wnd)
@@ -170,10 +170,10 @@ relayoutControls(void)
 		    MAKELPARAM(FALSE, 0));
 
 		MoveWindow(*sCtrlDefs[i].wnd,
-		    MulDiv(sCtrlDefs[i].x, -lfont->lfHeight, 12),
-		    MulDiv(sCtrlDefs[i].y, -lfont->lfHeight, 12),
-		    MulDiv(sCtrlDefs[i].w, -lfont->lfHeight, 12),
-		    MulDiv(sCtrlDefs[i].h, -lfont->lfHeight, 12), TRUE);
+		    MulDiv(sCtrlDefs[i].x, -lfont->lfHeight, 11),
+		    MulDiv(sCtrlDefs[i].y, -lfont->lfHeight, 11),
+		    MulDiv(sCtrlDefs[i].w, -lfont->lfHeight, 11),
+		    MulDiv(sCtrlDefs[i].h, -lfont->lfHeight, 11), TRUE);
 	}
 }
 
