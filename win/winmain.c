@@ -199,6 +199,13 @@ loadFunctions(void)
 {
 	HMODULE lib;
 
+	if (!(lib = LoadLibrary("kernel32.dll")))
+		errWin(IDS_ELOADLIB);
+	if (!(sGetVersion = (void *)GetProcAddress(lib, "GetVersion")))
+		errWin(IDS_ELOADLIB);
+
+	sIs95Up = LOBYTE(LOWORD(sGetVersion())) >= 4;
+
 	if (!(lib = LoadLibrary("user32.dll")))
 		errWin(IDS_ELOADLIB);
 	sGetDpiForSystem = (void *)GetProcAddress(lib, "GetDpiForSystem");
@@ -772,9 +779,8 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 	(void)cmd;
 	
 	sInstance = instance;
-	sIs95Up = LOBYTE(LOWORD(GetVersion())) >= 4;
 
-	loadFunctions();
+	loadFunctions(); /* also sets sIs95Up */
 	setupWinsock();
 
 	if (sInitCommonControls)
