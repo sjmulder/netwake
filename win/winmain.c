@@ -43,12 +43,13 @@ static HWND sNameLabel, sNameField;
 static HWND sFavLabel, sFavList;
 static HWND sQuitBtn, sDelBtn, sSaveBtn;
 
+/* sort of declarative layout, see createControls() */
 static const struct {
 	HWND *wnd;
-	int x, y, w, h; /* 1/8th of font size (1px on Windows 95-XP) */
+	int x, y, w, h;		/* 1/8th of font size (1px on Windows 95-XP) */
 	const char *className;
-	int id, textRes;
-	DWORD style, exStyle;
+	int id, textRes;	/* both optional */
+	DWORD style, exStyle;	/* some logic applies, see createControls() */
 } sCtrlDefs[] = {
 	{&sInfoFrame, -8, -16, 168, 298, "BUTTON", 0, 0, WS_GROUP | BS_GROUPBOX,
 	    0},
@@ -202,19 +203,28 @@ loadFunctions(void)
 
 	if (!(lib = LoadLibrary("kernel32.dll")))
 		errWin(IDS_ELOADLIB);
+
+	/*
+	 * GetVersion() is obsolete and will yield a compile error on modern
+	 * SDKs if invoked directly, but it's exactly what we need.
+	 */
 	if (!(sGetVersion = (void *)GetProcAddress(lib, "GetVersion")))
 		errWin(IDS_ELOADLIB);
 
+	/* not pretty to set here but we need it immediately */
 	sIs95Up = LOBYTE(LOWORD(sGetVersion())) >= 4;
 
 	if (!(lib = LoadLibrary("user32.dll")))
 		errWin(IDS_ELOADLIB);
+
+	/* optional, we'll assume 96 if unavailable */
 	sGetDpiForSystem = (void *)GetProcAddress(lib, "GetDpiForSystem");
 
 	if (sIs95Up) {
 		/* attempting this on Win 3.11 yields a message box */
 		if (!(lib = LoadLibrary("comctl32.dll")))
 			errWin(IDS_ELOADLIB);
+
 		sInitCommonControls = (void *)GetProcAddress(lib,
 		    "InitCommonControls");
 	}
@@ -235,6 +245,7 @@ loadFont(void)
 	if (!bret)
 		return; /* sFontSize has a suitable default */
 
+	/* system returns a negative, which means points instead of pixels */
 	sFontSize = -metrics.lfMessageFont.lfHeight;
 
 	lfont = &metrics.lfMessageFont;
@@ -332,7 +343,6 @@ loadPrefsIni(void)
 	char buf[1024], *name;
 
 	buf[0] = '\0';
-
 	GetPrivateProfileString("Main", "LastAddress", NULL, buf, sizeof(buf),
 	    sIniName);
 	SetWindowText(sMacField, buf);
@@ -690,12 +700,22 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 	switch (msg) {
 	case WM_SYSCOLORCHANGE:
 	case CPAT_WM_THEMECHANGED:
+		/*
+		 * System font, color, theme, decoration etc. changed. We'll
+		 * need to relayout, reload font, and update the window size
+		 * because the client rect could have changed.
+		 */
 		loadFont();
 		relayoutControls();
 
 		GetWindowRect(sWnd, &frame);
 		GetClientRect(sWnd, &client);
 
+		/*
+		 * Adjust frame by the difference between old client area size,
+		 * and new desired client area size. It apppears that at this
+		 * point AdjustWindowRect() doesn't use the new metrics yet.
+		 */
 		frame.right += scale(sWndSize.right) - client.right;
 		frame.bottom += scale(sWndSize.bottom) - client.bottom;
 
@@ -706,6 +726,11 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		return 0;
 
 	case CPAT_WM_DPICHANGED:
+		/*
+		 * Here we get a new suggested window rect so no need to
+		 * (possibly mis-)calculate one, but still need to relayout and
+* 		 * reload fonts.
+		 */
 		sDpi = HIWORD(wparam);
 		rectp = (RECT *)lparam;
 
@@ -718,6 +743,10 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		return 0;
 
 	case DM_GETDEFID:
+		/*
+		 * Called by buttons and updateDefBtn() to learn what the
+		 * default button ought to be.
+* 		 */
 		focus = GetFocus();
 		if (focus == sMacField || focus == sFavList)
 			return MAKELRESULT(ID_WAKEBTN, DC_HASDEFID);
@@ -746,9 +775,10 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		else if (sender == sSaveBtn)
 			saveFav();
 		else if (event == EN_SETFOCUS || event == LBN_SETFOCUS)
-			updateDefBtn();
-		else if (sender) /* accelerators from here on */
+			updateDefBtn(); /* see that function */
+		else if (sender)
 			break;
+		/* accelerators (no sender) */
 		else if (cmd == IDC_ENTER && focus == sMacField)
 			sendWol();
 		else if (cmd == IDC_ENTER && focus == sNameField)
@@ -758,9 +788,14 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 				sendWol();
 		} else if (cmd == IDC_DELETE && focus == sFavList)
 			deleteFav();
-		else if (cmd == IDC_DELETE) /* ugh */
+		else if (cmd == IDC_DELETE) {
+			/*
+			 * We've captured the delete key - if we don't forward
+			 * it the key won't work in text boxes etc. There's
+			 * probably a better way.
+			 */
 			SendMessage(focus, WM_KEYDOWN, VK_DELETE, 0);
-		else
+		} else
 			break;
 		return 0;
 
