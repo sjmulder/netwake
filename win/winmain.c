@@ -68,30 +68,59 @@ static const struct {
 	    WS_TABSTOP, 0}
 };
 
-
 static void
-warn(int msgRes)
+warnStrWin(const char *prefix)
 {
 	char msg[1024];
 	DWORD err;
 	size_t len=0, i;
 
+	err = GetLastError();
+
+	for (i=0; prefix[i] && len < sizeof(msg)-1; i++)
+		msg[len++] = prefix[i];
+	for (i=0; i < 4 && len < sizeof(msg)-1; i++)
+		msg[len++] = "\r\n\r\n"[i];
+	msg[len] = '\0';
+
+	FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, err, 0,
+	    &msg[len], sizeof(msg) - len, NULL);
+	MessageBox(sWnd, msg, sAppTitle, MB_OK | MB_ICONEXCLAMATION);
+}
+
+static void
+warn(int msgRes)
+{
+	char msg[1024];
+
 	if (!LoadString(sInstance, msgRes, msg, sizeof(msg))) {
-		err = GetLastError();
-
-		for (i=0; sNoResMsg[i] && len < sizeof(msg)-1; i++)
-			msg[len++] = sNoResMsg[i];
-		for (i=0; i < 4 && len < sizeof(msg)-1; i++)
-			msg[len++] = "\r\n\r\n"[i];
-		msg[len] = '\0';
-
-		FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, err, 0,
-		    &msg[len], sizeof(msg) - len, NULL);
-
-		MessageBox(sWnd, msg, sAppTitle, MB_OK | MB_ICONEXCLAMATION);
+		warnStrWin(sNoResMsg);
 		return;
 	}
 
+	MessageBox(sWnd, msg, sAppTitle, MB_OK | MB_ICONEXCLAMATION);
+}
+
+static void
+warnWin(int prefixRes)
+{
+	char msg[1024];
+	DWORD err;
+	size_t len, i;
+
+	err = GetLastError();
+
+	if (!(len = LoadString(sInstance, prefixRes, msg, sizeof(msg)))) {
+		warnStrWin(sNoResMsg);
+		return;
+	}
+
+	for (i=0; i < 4 && len < sizeof(msg)-1; i++)
+		msg[len++] = "\r\n\r\n"[i];
+	msg[len] = '\0';
+
+	FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, err, 0,
+	    &msg[len], sizeof(msg) - len, NULL);
 	MessageBox(sWnd, msg, sAppTitle, MB_OK | MB_ICONEXCLAMATION);
 }
 
@@ -102,13 +131,20 @@ err(int msgRes)
 	ExitProcess(1);
 }
 
+static void __declspec(noreturn)
+errWin(int msgRes)
+{
+	warnWin(msgRes);
+	ExitProcess(1);
+}
+
 static void
 info(int msgRes)
 {
 	char msg[1024];
 
 	if (!LoadString(sInstance, msgRes, msg, sizeof(msg))) {
-		warn(IDS_ERESMISS);
+		warnWin(IDS_ERESMISS);
 		return;
 	}
 
@@ -195,7 +231,7 @@ createControls(void)
 		    scale(sCtrlDefs[i].w), scale(sCtrlDefs[i].h),
 		    sWnd, (HMENU)sCtrlDefs[i].id, sInstance, NULL);
 		if (!*sCtrlDefs[i].wnd)
-			err(IDS_ECREATEWND);
+			errWin(IDS_ECREATEWND);
 
 		if (sFont)
 			SendMessage(*sCtrlDefs[i].wnd, WM_SETFONT,
@@ -255,7 +291,7 @@ loadPrefs(void)
 		else if (lret == ERROR_NO_MORE_ITEMS)
 			break;
 		else {
-			warn(IDS_EREGREAD);
+			warnWin(IDS_EREGREAD);
 			break;
 		}
 	}
@@ -291,16 +327,16 @@ saveFav(void)
 	    "Software\\Netwake\\Favourites", 0, NULL, REG_OPTION_NON_VOLATILE,
 	    KEY_ALL_ACCESS, NULL, &key, NULL);
 	if (lret != ERROR_SUCCESS) {
+		warnWin(IDS_EREGWRITE);
 		RegCloseKey(key);
-		warn(IDS_EREGWRITE);
 		return;
 	}
 
 	lret = RegSetValueEx(key, name, 0, REG_SZ, (BYTE *)macStr,
 	    strlen(macStr)+1);
 	if (lret != ERROR_SUCCESS) {
+		warnWin(IDS_EREGWRITE);
 		RegCloseKey(key);
-		warn(IDS_EREGWRITE);
 		return;
 	}
 
@@ -325,9 +361,13 @@ loadFav(void)
 	}
 
 	len = SendMessage(sFavList, LB_GETTEXTLEN, idx, 0);
-	if (!len || len >= (LRESULT)sizeof(name) ||
-	    SendMessage(sFavList, LB_GETTEXT, idx, (LPARAM)name) == LB_ERR) {
+	if (!len || len >= (LRESULT)sizeof(name)) {
 		warn(IDS_ENAMEREAD);
+		return -1;
+	}
+
+	if (SendMessage(sFavList, LB_GETTEXT, idx, (LPARAM)name) == LB_ERR) {
+		warnWin(IDS_ENAMEREAD);
 		return -1;
 	}
 
@@ -341,8 +381,8 @@ loadFav(void)
 	sz = (DWORD)sizeof(macStr);
 	lret = RegQueryValueEx(key, name, NULL, &type, (BYTE *)macStr, &sz);
 	if (lret != ERROR_SUCCESS || type != REG_SZ) {
+		warnWin(IDS_EREGREAD);
 		RegCloseKey(key);
-		warn(IDS_EREGREAD);
 		return -1;
 	}
 
@@ -369,9 +409,13 @@ deleteFav()
 	}
 
 	len = SendMessage(sFavList, LB_GETTEXTLEN, idx, 0);
-	if (!len || len >= (LRESULT)sizeof(name) ||
-	    SendMessage(sFavList, LB_GETTEXT, idx, (LPARAM)name) == LB_ERR) {
+	if (!len || len >= (LRESULT)sizeof(name)) {
 		warn(IDS_ENAMEREAD);
+		return;
+	}
+
+	if (SendMessage(sFavList, LB_GETTEXT, idx, (LPARAM)name) == LB_ERR) {
+		warnWin(IDS_ENAMEREAD);
 		return;
 	}
 
@@ -381,8 +425,8 @@ deleteFav()
 	    0, KEY_SET_VALUE, &key);
 	if (lret != ERROR_SUCCESS ||
 	    RegDeleteValue(key, name) != ERROR_SUCCESS) {
+		warnWin(IDS_EREGWRITE);
 		RegCloseKey(key);
-		warn(IDS_EREGWRITE);
 		return;
 	}
 
@@ -556,10 +600,10 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 
 	accel = LoadAccelerators(sInstance, MAKEINTRESOURCE(IDA_ACCELS));
 	if (!accel)
-		err(IDS_ERESMISS);
+		errWin(IDS_ERESMISS);
 
 	if (!LoadString(sInstance, IDS_APPTITLE, sAppTitle, sizeof(sAppTitle)))
-		err(IDS_ERESMISS);
+		errWin(IDS_ERESMISS);
 
 	ZeroMemory(&wc, sizeof(wc));
 	wc.hInstance = instance;
@@ -568,7 +612,7 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 	wc.hbrBackground = (HBRUSH)(COLOR_BTNFACE+1);
 
 	if (!RegisterClass(&wc))
-		err(IDS_EREGCLASS);
+		errWin(IDS_EREGCLASS);
 
 	rect = sWndSize;
 	rect.right = scale(rect.right);
@@ -581,7 +625,7 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 	    rect.right - rect.left, rect.bottom - rect.top,
 	    NULL, NULL, instance, NULL);
 	if (!sWnd)
-		err(IDS_ECREATEWND);
+		errWin(IDS_ECREATEWND);
 
 	createControls();
 	loadPrefs();
