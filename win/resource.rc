@@ -90,6 +90,7 @@ Example: d2:32:e4:87:85:24"
 	IDS_EREGCLASS	"The window class could not be registered:"
 	IDS_EINIWRITE	"An error occured while writing to netwake.ini:"
 	IDS_EINIREAD	"An error occured while reading from netwake.ini:"
+	IDS_ELOADLIB	"A required function or DLL could not be loaded:"
 }
 
 STRINGTABLE
@@ -135,4 +136,5 @@ Er is een fout opgetreden bij het schrijven naar het register:"
 Er is een fout opgetreden bij het schrijven naar netwake.ini:"
 	IDS_EINIREAD	"\
 Er is een fout opgetreden bij het lezen uit netwake.ini."
+	IDS_ELOADLIB	"Een vereiste functie of DLL kon niet worden geladen:"
 }

@@ -13,6 +13,7 @@
 #define ID_WAKEBTN	101
 #define ID_SAVEBTN	102
 
+static DWORD (*sGetVersion)(void);
 static UINT (*sGetDpiForSystem)(void);
 static UINT (*sInitCommonControls)(void);
 
@@ -198,12 +199,13 @@ loadFunctions(void)
 {
 	HMODULE lib;
 
-	if ((lib = LoadLibrary("user32.dll"))) {
-		sGetDpiForSystem = (void *)GetProcAddress(lib,
-		    "GetDpiForSystem");
-	}
+	if (!(lib = LoadLibrary("user32.dll")))
+		errWin(IDS_ELOADLIB);
+	sGetDpiForSystem = (void *)GetProcAddress(lib, "GetDpiForSystem");
 
-	if (sIs95Up && (lib = LoadLibrary("comctl32.dll"))) {
+	if (sIs95Up) {
+		if (!(lib = LoadLibrary("comctl32.dll")))
+			errWin(IDS_ELOADLIB);
 		sInitCommonControls = (void *)GetProcAddress(lib,
 		    "InitCommonControls");
 	}
