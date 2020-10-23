@@ -20,12 +20,6 @@ static const DWORD sWndStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU |
     WS_MINIMIZEBOX;
 static const RECT sWndSize = {0, 0, 456, 272};
 
-static const char sBadMacText[] =
-"Invalid MAC address.\r\n\r\n"
-"The address should consist of 6 pairs of hexadecimal digits (0-A), "
-"optionally separated by colons.\r\n\r\n"
-"Example: d2:32:e4:87:85:24";
-
 static HINSTANCE sInstance;
 static HFONT sFont;
 static WORD sBaseDpi = 96, sDpi = 96;
