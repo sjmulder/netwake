@@ -153,7 +153,12 @@
     <ResourceCompile Include="resource.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\wol.c" />
     <ClCompile Include="winmain.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\util.h" />
+    <ClInclude Include="..\wol.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

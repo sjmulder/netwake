@@ -3,14 +3,11 @@
 #include <windows.h>
 #include <winsock2.h>
 #include <commctrl.h>
+#include "../util.h"
+#include "../wol.h"
 
 #define CPAT_WM_THEMECHANGED	0x031A
 #define CPAT_WM_DPICHANGED	0x02E0
-
-#define LEN(a) (sizeof(a)/sizeof(*(a)))
-
-typedef struct MacAddr {char bytes[6];} tMacAddr;
-typedef struct WolPacket {char zeroes[6]; tMacAddr macs[16];} tWolPacket;
 
 static UINT (*sGetDpiForSystem)(void);
 
@@ -63,11 +60,11 @@ static const struct {
 	{&sSaveBtn, 373, 240, 75, 23, "BUTTON", "&Save", WS_TABSTOP, 0}
 };
 
-static void __declspec(noreturn)
-err(const char *msg)
+void __declspec(noreturn)
+err(int code, const char *msg)
 {
 	MessageBox(sWnd, msg, "Netwake", MB_OK | MB_ICONEXCLAMATION);
-	ExitProcess(1);
+	ExitProcess(code);
 }
 
 static void
@@ -76,7 +73,7 @@ loadFunctions(void)
 	HMODULE user32;
 
 	if (!(user32 = LoadLibrary("user32.dll")))
-		err("LoadLibrary(user32.dl) failed");
+		err(1, "LoadLibrary(user32.dl) failed");
 
 	sGetDpiForSystem = (void *)GetProcAddress(user32, "GetDpiForSystem");
 }
@@ -87,7 +84,7 @@ setupWinsock(void)
 	WSADATA data;
 
 	if (WSAStartup(MAKEWORD(2, 0), &data))
-		err("WSAStartup failed");
+		err(1, "WSAStartup failed");
 }
 
 static void
@@ -105,14 +102,14 @@ applySystemFont(void)
 
 	if (!SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(metrics),
 	    &metrics, 0))
-	    	err("SystemParametersInfo failed");
+		err(1, "SystemParametersInfo failed");
 
 	lfont = &metrics.lfMessageFont;
 	lfont->lfHeight = MulDiv(lfont->lfHeight, sDpi, sBaseDpi);
 	lfont->lfWidth = MulDiv(lfont->lfWidth, sDpi, sBaseDpi);
 
 	if (!(sFont = CreateFontIndirect(lfont)))
-		err("CreateFontIndirect failed");
+		err(1, "CreateFontIndirect failed");
 
 	for (i=0; i < (int)LEN(sCtrlDefs); i++)
 		SendMessage(*sCtrlDefs[i].wnd, WM_SETFONT, (WPARAM)sFont,
@@ -135,7 +132,7 @@ createControls(void)
 		    MulDiv(sCtrlDefs[i].h, sDpi, 96),
 		    sWnd, NULL, sInstance, NULL);
 		if (!*sCtrlDefs[i].wnd)
-			err("Failed to create window");
+			err(1, "Failed to create window");
 	} 
 }
 
@@ -152,48 +149,17 @@ relayout(void)
 		    MulDiv(sCtrlDefs[i].h, sDpi, 96), TRUE);
 }
 
-static int
-parseMac(const char *str, tMacAddr *mac)
-{
-	int inPos, outPos=0;
-	char c;
 
-	ZeroMemory(mac, sizeof(*mac));
-
-	for (inPos=0; str[inPos]; inPos++) {
-		if (outPos >= (int)LEN(mac->bytes)*2)
-			return -1;
-		else if ((c = str[inPos]) == ':')
-			continue;
-		else if (c >= '0' && c <= '9') c -= '0';
-		else if (c >= 'a' && c <= 'f') c-= 'a'-10;
-		else if (c >= 'A' && c <= 'F') c-= 'A'-10;
-		else
-			return -1;
-
-		mac->bytes[outPos/2] |= c << (!(outPos & 1) * 4);
-		outPos++;
-	}
-
-	if (outPos < (int)LEN(mac->bytes)*2)
-		return -1;
-
-	return 0;
-}
 
 static void
 sendWol(void)
 {
 	char buf[256];
-	int i;
 	tMacAddr mac;
-	tWolPacket wol;
-	struct sockaddr_in addr;
-	SOCKET sock;
 
 	GetWindowText(sMacField, buf, sizeof(buf));
 
-	if (parseMac(buf, &mac) == -1) {
+	if (ParseMacAddr(buf, &mac) == -1) {
 		MessageBox(sWnd, "Invalid MAC address.\r\n\r\n"
 		    "The address should consist of 8 pairs of hexadecimal "
 		    "digits (0-A), optionally separated by colons.\r\n\r\n"
@@ -202,26 +168,7 @@ sendWol(void)
 		return;
 	}
 
-	ZeroMemory(&wol, sizeof(wol));
-	for (i=0; i < (int)LEN(wol.zeroes); i++)
-		wol.zeroes[i] = (char)0xFF;
-	for (i=0; i < (int)LEN(wol.macs); i++)
-		wol.macs[i] = mac;
-
-	ZeroMemory(&addr, sizeof(addr));
-	addr.sin_family = AF_INET;
-	addr.sin_port = 9;
-	addr.sin_addr.S_un.S_addr = 0xFFFFFFFF;
-
-	if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET)
-		err("socket() failed");
-	if (connect(sock, (struct sockaddr *)&addr, sizeof(addr))
-	    == SOCKET_ERROR)
-		err("connect() failed");
-	if (send(sock, (void *)&wol, sizeof(wol), 0) == SOCKET_ERROR)
-		err("send() failed");
-
-	closesocket(sock);
+	SendWolPacket(&mac);
 
 	MessageBox(sWnd, "Wake-on-LAN packet sent!", "Netwake",
 	    MB_ICONINFORMATION | MB_OK);
@@ -287,7 +234,7 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 	wc.hbrBackground = (HBRUSH)(COLOR_BTNFACE+1);
 
 	if (!RegisterClass(&wc))
-		err("RegisterClass failed");
+		err(1, "RegisterClass failed");
 
 	if (sGetDpiForSystem)
 		sBaseDpi = sDpi = sGetDpiForSystem();
@@ -297,14 +244,14 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 	rect.bottom = MulDiv(rect.bottom, sDpi, 96);
 
 	if (!AdjustWindowRect(&rect, sWndStyle, FALSE))
-		err("AdjustWindowRect failed");
+		err(1, "AdjustWindowRect failed");
 
 	sWnd = CreateWindow(sClassName, "Netwake", sWndStyle,
 	    CW_USEDEFAULT, CW_USEDEFAULT,
 	    rect.right - rect.left, rect.bottom - rect.top,
 	    NULL, NULL, instance, NULL);
 	if (!sWnd)
-		err("CreateWindow failed");
+		err(1, "CreateWindow failed");
 
 	createControls();
 	applySystemFont();
