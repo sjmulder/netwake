@@ -32,7 +32,7 @@ static const char sBadMacText[] =
 
 static HINSTANCE sInstance;
 static HFONT sFont;
-static WORD sBaseDpi = 96, sDpi = 96;
+static WORD sBaseDpi = 96, sDpi = 96, sFontSize;
 
 static HWND sWnd;
 static HWND sInfoFrame, sInfoLabel;
@@ -96,57 +96,13 @@ setupWinsock(void)
 	if (WSAStartup(MAKEWORD(2, 0), &data))
 		err(1, "WSAStartup failed");
 }
-static void
-createControls(void)
-{
-	BOOL bret;
-	NONCLIENTMETRICS metrics;
-	LOGFONT *lfont;
-	int i;
-
-	ZeroMemory(&metrics, sizeof(metrics));
-	metrics.cbSize = sizeof(metrics);
-
-	bret = SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(metrics),
-	    &metrics, 0);
-	if (!bret)
-		err(1, "SystemParametersInfo() failed.");
-
-	/* no need to scale here, Dpi == BaseDpi at initial setup */
-	lfont = &metrics.lfMessageFont;
-
-	if (!(sFont = CreateFontIndirect(&metrics.lfMessageFont)))
-		err(1, "CreateFontIndirect() failed.");
-
-	for (i=0; i < (int)LEN(sCtrlDefs); i++) {
-		*sCtrlDefs[i].wnd = CreateWindowEx(
-		    sCtrlDefs[i].exStyle,
-		    sCtrlDefs[i].className, sCtrlDefs[i].text,
-		    sCtrlDefs[i].style | WS_VISIBLE | WS_CHILD,
-		    MulDiv(sCtrlDefs[i].x, -lfont->lfHeight, 11),
-		    MulDiv(sCtrlDefs[i].y, -lfont->lfHeight, 11),
-		    MulDiv(sCtrlDefs[i].w, -lfont->lfHeight, 11),
-		    MulDiv(sCtrlDefs[i].h, -lfont->lfHeight, 11),
-		    sWnd, NULL, sInstance, NULL);
-
-		if (!*sCtrlDefs[i].wnd)
-			err(1, "CreateWindowEx() failed.");
-
-		SendMessage(*sCtrlDefs[i].wnd, WM_SETFONT, (WPARAM)sFont,
-		    MAKELPARAM(FALSE, 0));
-	} 
-}
 
 static void
-relayoutControls(void)
+loadFont(void)
 {
-	BOOL bret;
 	NONCLIENTMETRICS metrics;
 	LOGFONT *lfont;
-	int i;
-
-	if (sFont)
-		DeleteObject(sFont);
+	BOOL bret;
 
 	ZeroMemory(&metrics, sizeof(metrics));
 	metrics.cbSize = sizeof(metrics);
@@ -160,20 +116,52 @@ relayoutControls(void)
 	lfont->lfHeight = MulDiv(lfont->lfHeight, sDpi, sBaseDpi);
 	lfont->lfWidth = MulDiv(lfont->lfWidth, sDpi, sBaseDpi);
 
+	sFontSize = (WORD)-lfont->lfHeight;
+
 	if (sFont)
 		DeleteObject(sFont);
 	if (!(sFont = CreateFontIndirect(lfont)))
 		err(1, "CreateFontIndirect() failed.");
+}
+
+static void
+createControls(void)
+{
+	int i;
+
+	for (i=0; i < (int)LEN(sCtrlDefs); i++) {
+		*sCtrlDefs[i].wnd = CreateWindowEx(
+		    sCtrlDefs[i].exStyle,
+		    sCtrlDefs[i].className, sCtrlDefs[i].text,
+		    sCtrlDefs[i].style | WS_VISIBLE | WS_CHILD,
+		    MulDiv(sCtrlDefs[i].x, sFontSize, 11),
+		    MulDiv(sCtrlDefs[i].y, sFontSize, 11),
+		    MulDiv(sCtrlDefs[i].w, sFontSize, 11),
+		    MulDiv(sCtrlDefs[i].h, sFontSize, 11),
+		    sWnd, NULL, sInstance, NULL);
+
+		if (!*sCtrlDefs[i].wnd)
+			err(1, "CreateWindowEx() failed.");
+
+		SendMessage(*sCtrlDefs[i].wnd, WM_SETFONT, (WPARAM)sFont,
+		    MAKELPARAM(FALSE, 0));
+	}
+}
+
+static void
+relayoutControls(void)
+{
+	int i;
 
 	for (i=0; i < (int)LEN(sCtrlDefs); i++) {
 		SendMessage(*sCtrlDefs[i].wnd, WM_SETFONT, (WPARAM)sFont,
 		    MAKELPARAM(FALSE, 0));
 
 		MoveWindow(*sCtrlDefs[i].wnd,
-		    MulDiv(sCtrlDefs[i].x, -lfont->lfHeight, 11),
-		    MulDiv(sCtrlDefs[i].y, -lfont->lfHeight, 11),
-		    MulDiv(sCtrlDefs[i].w, -lfont->lfHeight, 11),
-		    MulDiv(sCtrlDefs[i].h, -lfont->lfHeight, 11), TRUE);
+		    MulDiv(sCtrlDefs[i].x, sFontSize, 11),
+		    MulDiv(sCtrlDefs[i].y, sFontSize, 11),
+		    MulDiv(sCtrlDefs[i].w, sFontSize, 11),
+		    MulDiv(sCtrlDefs[i].h, sFontSize, 11), TRUE);
 	}
 }
 
@@ -225,14 +213,14 @@ saveFav(void)
 	char macStr[256], name[256];
 	tMacAddr mac;
 	HKEY key;
-	LSTATUS ls;
+	LONG lret;
 
 	GetWindowText(sMacField, macStr, sizeof(macStr));
 	GetWindowText(sNameField, name, sizeof(name));
 
 	if (!strlen(macStr) || !strlen(name)) {
-		MessageBox(sWnd, "Enter a MAC and a name first to save it.",
-		    "Netwake", MB_ICONEXCLAMATION | MB_OK);
+		MessageBox(sWnd, "Enter a MAC address and a name first to "
+		    "save it.", "Netwake", MB_ICONEXCLAMATION | MB_OK);
 		return;
 	}
 
@@ -371,19 +359,35 @@ sendWol(void)
 static LRESULT CALLBACK
 wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-	RECT *rectp;
+	RECT *rectp, frame, client;
 	HWND focus;
 
 	switch (msg) {
 	case WM_SYSCOLORCHANGE:
 	case CPAT_WM_THEMECHANGED:
+		loadFont();
 		relayoutControls();
+
+		GetWindowRect(sWnd, &frame);
+		GetClientRect(sWnd, &client);
+
+		frame.right -= client.right;
+		frame.right += MulDiv(sWndSize.right, sFontSize, 11);
+		frame.bottom -= client.bottom;
+		frame.bottom += MulDiv(sWndSize.bottom, sFontSize, 11);
+
+		AdjustWindowRect(&client, sWndStyle, FALSE);
+		MoveWindow(sWnd, frame.left, frame.top,
+		    frame.right - frame.left,
+		    frame.bottom - frame.top, TRUE);
 		return 0;
 	case CPAT_WM_DPICHANGED:
 		sDpi = HIWORD(wparam);
 		rectp = (RECT *)lparam;
 
+		loadFont();
 		relayoutControls();
+
 		MoveWindow(wnd, rectp->left, rectp->top,
 		    rectp->right - rectp->left,
 		    rectp->bottom - rectp->top, TRUE);
@@ -445,6 +449,11 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 	setupWinsock();
 	InitCommonControls();
 
+	if (sGetDpiForSystem)
+		sBaseDpi = sDpi = sGetDpiForSystem();
+
+	loadFont();
+
 	accel = LoadAccelerators(sInstance, MAKEINTRESOURCE(IDA_ACCELS));
 	if (!accel)
 		err(1, "LoadAccelerators() failed.");
@@ -458,12 +467,9 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 	if (!RegisterClass(&wc))
 		err(1, "RegisterClass failed.");
 
-	if (sGetDpiForSystem)
-		sBaseDpi = sDpi = sGetDpiForSystem();
-
 	rect = sWndSize;
-	rect.right  = MulDiv(rect.right, sDpi, 96);
-	rect.bottom = MulDiv(rect.bottom, sDpi, 96);
+	rect.right = MulDiv(rect.right, sFontSize, 11);
+	rect.bottom = MulDiv(rect.bottom, sFontSize, 11);
 
 	if (!AdjustWindowRect(&rect, sWndStyle, FALSE))
 		err(1, "AdjustWindowRect() failed.");
