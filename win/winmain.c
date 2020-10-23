@@ -60,7 +60,8 @@ static const struct {
 	    WS_EX_CLIENTEDGE},
 	{&sFavLabel, 168, 98, 96, 17, "STATIC", "&Favourites:", 0, 0},
 	{&sFavList, 264, 96, 184, 140, "LISTBOX", NULL,
-	    WS_TABSTOP | LBS_SORT | LBS_NOINTEGRALHEIGHT, WS_EX_CLIENTEDGE},
+	    WS_TABSTOP | WS_VSCROLL | LBS_SORT | LBS_NOINTEGRALHEIGHT,
+	    WS_EX_CLIENTEDGE},
 	{&sQuitBtn, 8, 240, 75, 23, "BUTTON", "&Quit", WS_TABSTOP, 0},
 	{&sDelBtn, 293, 240, 75, 23, "BUTTON", "&Delete",
 	    WS_TABSTOP | WS_DISABLED, 0},
@@ -160,18 +161,36 @@ static void
 loadPrefs(void)
 {
 	HKEY key;
-	char buf[256];
-	DWORD sz;
+	char macStr[256], name[256];
+	DWORD sz, i;
+	LSTATUS res;
 
 	if (RegOpenKeyEx(HKEY_CURRENT_USER, "SOFTWARE\\Netwake", 0, KEY_READ,
 	    &key) != ERROR_SUCCESS)
 		return;
 
-	sz = (DWORD)sizeof(buf);
+	sz = (DWORD)sizeof(macStr);
 	if (RegGetValue(key, NULL, "LastAddress", RRF_RT_REG_SZ, NULL,
-	    (BYTE *)buf, &sz) == ERROR_SUCCESS) {
-		SetWindowText(sMacField, buf);
+	    (BYTE *)macStr, &sz) == ERROR_SUCCESS) {
+		SetWindowText(sMacField, macStr);
 		SendMessage(sMacField, EM_SETSEL, (WPARAM)0, (LPARAM)-1);
+	}
+
+	RegCloseKey(key);
+
+	if (RegOpenKeyEx(HKEY_CURRENT_USER, "SOFTWARE\\Netwake\\Favourites", 0, KEY_READ,
+	    &key) != ERROR_SUCCESS)
+		return;
+
+	for (i=0; ; i++) {
+		sz = (DWORD)sizeof(name);
+		res = RegEnumValue(key, i, name, &sz, NULL, NULL, NULL, NULL);
+		if (res == ERROR_SUCCESS)
+			SendMessage(sFavList, LB_ADDSTRING, 0, (LPARAM)name);
+		else if (res == ERROR_NO_MORE_ITEMS)
+			break;
+		else
+			err(1, "RegEnumValue() failed");
 	}
 
 	RegCloseKey(key);
