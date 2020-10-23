@@ -221,15 +221,6 @@ loadFunctions(void)
 }
 
 static void
-setupWinsock(void)
-{
-	WSADATA data;
-
-	if (WSAStartup(MAKEWORD(1, 1), &data))
-		err(IDS_ESOCKSETUP);
-}
-
-static void
 loadFont(void)
 {
 	NONCLIENTMETRICS metrics;
@@ -792,6 +783,7 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 	RECT rect;
 	MSG msg;
 	BOOL ret;
+	WSADATA data;
 
 	(void)prev;
 	(void)cmd;
@@ -799,8 +791,9 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 	sInstance = instance;
 
 	loadFunctions(); /* also sets sIs95Up */
-	setupWinsock();
 
+	if (WSAStartup(MAKEWORD(1, 1), &data))
+		err(IDS_ESOCKSETUP);
 	if (sInitCommonControls)
 		sInitCommonControls();
 	if (sGetDpiForSystem)
