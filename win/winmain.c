@@ -9,7 +9,7 @@
 static const char sClassName[] = "Netwake";
 static const DWORD sWndStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU |
     WS_MINIMIZEBOX;
-static const RECT sWndSize = {0, 0, 430, 256};
+static const RECT sWndSize = {0, 0, 456, 272};
 
 static const char sInfoText[] =
 "Turn on a computer by sending it a Wake-On-Lan packet.\r\n\r\n"
@@ -37,22 +37,22 @@ static const struct {
 	const char *text;
 	DWORD style, exStyle;
 } sCtrlDefs[] = {
-	{&sInfoFrame, -8, -16, 168, 282, "BUTTON", "About",
+	{&sInfoFrame, -8, -16, 168, 298, "BUTTON", "About",
 	    WS_GROUP | BS_GROUPBOX, 0},
-	{&sInfoLabel, 8, 8, 140, 240, "STATIC", sInfoText, 0, 0},
+	{&sInfoLabel, 8, 8, 140, 256, "STATIC", sInfoText, 0, 0},
 	{&sMacLabel, 168, 10, 96, 17, "STATIC", "MAC &Address:", 0, 0},
-	{&sMacField, 264, 8, 160, 21, "EDIT", NULL, WS_TABSTOP,
+	{&sMacField, 264, 8, 184, 21, "EDIT", NULL, WS_TABSTOP,
 	    WS_EX_CLIENTEDGE},
-	{&sWakeBtn, 349, 32, 75, 23, "BUTTON", "&Wake", WS_TABSTOP, 0},
+	{&sWakeBtn, 373, 33, 75, 23, "BUTTON", "&Wake", WS_TABSTOP, 0},
 	{&sNameLabel, 168, 74, 96, 17, "STATIC", "&Name:", 0, 0},
-	{&sNameField, 264, 72, 160, 21, "EDIT", NULL, WS_TABSTOP ,
+	{&sNameField, 264, 72, 184, 21, "EDIT", NULL, WS_TABSTOP ,
 	    WS_EX_CLIENTEDGE},
 	{&sFavLabel, 168, 98, 96, 17, "STATIC", "&Favourites:", 0, 0},
-	{&sFavList, 264, 96, 160, 124, "LISTBOX", NULL,
+	{&sFavList, 264, 96, 184, 140, "LISTBOX", NULL,
 	    WS_TABSTOP | LBS_NOINTEGRALHEIGHT, WS_EX_CLIENTEDGE},
-	{&sQuitBtn, 8, 224, 75, 23, "BUTTON", "&Quit", WS_TABSTOP, 0},
-	{&sDelBtn, 269, 224, 75, 23, "BUTTON", "&Delete", WS_TABSTOP, 0},
-	{&sSaveBtn, 349, 224, 75, 23, "BUTTON", "&Save", WS_TABSTOP, 0}
+	{&sQuitBtn, 8, 240, 75, 23, "BUTTON", "&Quit", WS_TABSTOP, 0},
+	{&sDelBtn, 293, 240, 75, 23, "BUTTON", "&Delete", WS_TABSTOP, 0},
+	{&sSaveBtn, 373, 240, 75, 23, "BUTTON", "&Save", WS_TABSTOP, 0}
 };
 
 static void __declspec(noreturn)
