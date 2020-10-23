@@ -1,0 +1,203 @@
+#include <windows.h>
+#include <commctrl.h>
+
+#define CPAT_WM_THEMECHANGED 0x031A
+
+#define LEN(a) (sizeof(a)/sizeof(*(a)))
+
+static const char sClassName[] = "Netwake";
+static const DWORD sWndStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU |
+    WS_MINIMIZEBOX;
+static const RECT sWndSize = {0, 0, 424, 256};
+
+static const char sInfoText[] =
+"Turn on a computer by sending it a Wake-On-Lan packet.\r\n\r\n"
+"The computer must be on the same network and have WOL enabled in its "
+"firmware.\r\n\r\n"
+"By Sijmen J. Mulder\r\n"
+"Contact: ik@sjmulder.nl";
+
+static HINSTANCE sInstance;
+static HFONT sFont;
+
+static HWND sWnd;
+static HWND sInfoFrame, sInfoLabel;
+static HWND sMacLabel, sMacField;
+static HWND sWakeBtn;
+static HWND sNameLabel, sNameField;
+static HWND sFavLabel, sFavList;
+static HWND sQuitBtn, sDelBtn, sSaveBtn;
+
+static const struct {
+	HWND *wnd;
+	int x, y, w, h;
+	const char *className;
+	const char *text;
+	DWORD style, exStyle;
+} sCtrlDefs[] = {
+	{&sInfoFrame, -8, -16, 160, 282, "BUTTON", "About",
+	    WS_GROUP | BS_GROUPBOX, 0},
+	{&sInfoLabel, 8, 8, 136, 240, "STATIC", sInfoText, 0, 0},
+	{&sMacLabel, 160, 10, 96, 17, "STATIC", "MAC &Address:", 0, 0},
+	{&sMacField, 256, 8, 160, 21, "EDIT", NULL, WS_TABSTOP,
+	    WS_EX_CLIENTEDGE},
+	{&sWakeBtn, 341, 32, 75, 23, "BUTTON", "&Wake", WS_TABSTOP, 0},
+	{&sNameLabel, 160, 74, 96, 17, "STATIC", "&Name:", 0, 0},
+	{&sNameField, 256, 72, 160, 21, "EDIT", NULL, WS_TABSTOP ,
+	    WS_EX_CLIENTEDGE},
+	{&sFavLabel, 160, 98, 96, 17, "STATIC", "&Favourites:", 0, 0},
+	{&sFavList, 256, 96, 160, 124, "LISTBOX", NULL,
+	    WS_TABSTOP | LBS_NOINTEGRALHEIGHT, WS_EX_CLIENTEDGE},
+	{&sQuitBtn, 8, 224, 75, 23, "BUTTON", "&Quit", WS_TABSTOP, 0},
+	{&sDelBtn, 261, 224, 75, 23, "BUTTON", "&Delete", WS_TABSTOP, 0},
+	{&sSaveBtn, 341, 224, 75, 23, "BUTTON", "&Save", WS_TABSTOP, 0}
+};
+
+static void __declspec(noreturn)
+err(const char *msg)
+{
+	MessageBox(sWnd, msg, "Netwake", MB_OK | MB_ICONEXCLAMATION);
+	ExitProcess(1);
+}
+
+static void
+applySystemFont(void)
+{
+	NONCLIENTMETRICS metrics;
+	int i;
+
+	if (sFont)
+		DeleteObject(sFont);
+
+	ZeroMemory(&metrics, sizeof(metrics));
+	metrics.cbSize = sizeof(metrics);
+
+	if (!SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(metrics),
+	    &metrics, 0))
+	    	err("SystemParametersInfo failed");
+	if (!(sFont = CreateFontIndirect(&metrics.lfMessageFont)))
+		err("CreateFontIndirect failed");
+
+	for (i=0; i < LEN(sCtrlDefs); i++)
+		SendMessage(*sCtrlDefs[i].wnd, WM_SETFONT, (WPARAM)sFont,
+		    MAKELPARAM(FALSE, 0));
+}
+
+static void
+createControls(void)
+{
+	int i;
+
+	for (i=0; i < LEN(sCtrlDefs); i++) {
+		*sCtrlDefs[i].wnd = CreateWindowEx(
+		    sCtrlDefs[i].exStyle,
+		    sCtrlDefs[i].className, sCtrlDefs[i].text,
+		    sCtrlDefs[i].style | WS_VISIBLE | WS_CHILD,
+		    sCtrlDefs[i].x, sCtrlDefs[i].y,
+		    sCtrlDefs[i].w, sCtrlDefs[i].h,
+		    sWnd, NULL, sInstance, NULL);
+		if (!*sCtrlDefs[i].wnd)
+			err("Failed to create window");
+	} 
+}
+
+static void
+resizeWindow(void)
+{
+	RECT rect, frame;
+	
+	rect = sWndSize;
+
+	if (!AdjustWindowRect(&rect, sWndStyle, FALSE))
+		err("AdjustWindowRect failed");
+	if (!GetWindowRect(sWnd, &frame))
+		err("GetWindowRect failed");
+	if (!MoveWindow(sWnd, frame.left, frame.top,
+	    rect.right - rect.left, rect.bottom - rect.top, TRUE))
+		err("MoveWindow failed");
+}
+
+static BOOL
+handleCommand(HWND sender)
+{
+	if (sender == sQuitBtn)
+		DestroyWindow(sWnd);
+	else
+		return FALSE;
+
+	return TRUE;
+}
+
+static LRESULT CALLBACK
+wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+	switch (msg) {
+	case WM_SYSCOLORCHANGE:
+	case CPAT_WM_THEMECHANGED:
+		applySystemFont();
+//		resizeWindow();
+		return 0;
+	case WM_COMMAND:
+		if (handleCommand((HWND)lparam))
+			return 0;
+		break;
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		return 0;
+	}
+
+	return DefWindowProc(wnd, msg, wparam, lparam);
+}
+
+int WINAPI
+WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
+{
+	WNDCLASS wc;
+
+	RECT rect;
+	MSG msg;
+	BOOL ret;
+	
+	sInstance = instance;
+
+	InitCommonControls();
+
+	ZeroMemory(&wc, sizeof(wc));
+	wc.hInstance = instance;
+	wc.lpszClassName = sClassName;
+	wc.lpfnWndProc = wndProc;
+	wc.hbrBackground = (HBRUSH)(COLOR_BTNFACE+1);
+
+	if (!RegisterClass(&wc))
+		err("RegisterClass failed");
+
+	rect = sWndSize;
+	if (!AdjustWindowRect(&rect, sWndStyle, FALSE))
+		err("AdjustWindowRect failed");
+
+	sWnd = CreateWindow(sClassName, "Netwake", sWndStyle,
+	    CW_USEDEFAULT, CW_USEDEFAULT,
+	    rect.right - rect.left, rect.bottom - rect.top,
+	    NULL, NULL, instance, NULL);
+	if (!sWnd)
+		err("CreateWindow failed");
+
+	createControls();
+	applySystemFont();
+	SetFocus(sMacField);
+	ShowWindow(sWnd, showCmd);
+
+	while ((ret = GetMessage(&msg, NULL, 0, 0)) > 0) {
+		if (IsDialogMessage(sWnd, &msg))
+			continue;
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
+
+	DeleteObject(sFont);
+
+	if (ret == -1)
+		return ret;
+
+	return msg.wParam;
+}
