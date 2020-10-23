@@ -1,6 +1,7 @@
 .vs/
 Debug/
 Release/
+*.o
 *.user
 *.aps
 *.ncb
