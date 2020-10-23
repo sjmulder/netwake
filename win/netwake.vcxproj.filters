@@ -33,9 +33,6 @@
     </Manifest>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\util.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\wol.h">
       <Filter>Header Files</Filter>
     </ClInclude>

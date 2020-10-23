@@ -161,7 +161,6 @@
     <ClCompile Include="winmain.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\util.h" />
     <ClInclude Include="..\wol.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
