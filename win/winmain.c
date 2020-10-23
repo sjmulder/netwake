@@ -1,7 +1,8 @@
 #include <windows.h>
 #include <commctrl.h>
 
-#define CPAT_WM_THEMECHANGED 0x031A
+#define CPAT_WM_THEMECHANGED	0x031A
+#define CPAT_WM_DPICHANGED	0x02E0
 
 #define LEN(a) (sizeof(a)/sizeof(*(a)))
 
@@ -19,6 +20,7 @@ static const char sInfoText[] =
 
 static HINSTANCE sInstance;
 static HFONT sFont;
+static WORD sDpi = 96;
 
 static HWND sWnd;
 static HWND sInfoFrame, sInfoLabel;
@@ -64,6 +66,7 @@ static void
 applySystemFont(void)
 {
 	NONCLIENTMETRICS metrics;
+	LOGFONT *lfont;
 	int i;
 
 	if (sFont)
@@ -75,7 +78,12 @@ applySystemFont(void)
 	if (!SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(metrics),
 	    &metrics, 0))
 	    	err("SystemParametersInfo failed");
-	if (!(sFont = CreateFontIndirect(&metrics.lfMessageFont)))
+
+	lfont = &metrics.lfMessageFont;
+	lfont->lfHeight = MulDiv(lfont->lfHeight, sDpi, 96);
+	lfont->lfWidth = MulDiv(lfont->lfWidth, sDpi, 96);
+
+	if (!(sFont = CreateFontIndirect(lfont)))
 		err("CreateFontIndirect failed");
 
 	for (i=0; i < (int)LEN(sCtrlDefs); i++)
@@ -93,21 +101,48 @@ createControls(void)
 		    sCtrlDefs[i].exStyle,
 		    sCtrlDefs[i].className, sCtrlDefs[i].text,
 		    sCtrlDefs[i].style | WS_VISIBLE | WS_CHILD,
-		    sCtrlDefs[i].x, sCtrlDefs[i].y,
-		    sCtrlDefs[i].w, sCtrlDefs[i].h,
+		    MulDiv(sCtrlDefs[i].x, sDpi, 96),
+		    MulDiv(sCtrlDefs[i].y, sDpi, 96),
+		    MulDiv(sCtrlDefs[i].w, sDpi, 96),
+		    MulDiv(sCtrlDefs[i].h, sDpi, 96),
 		    sWnd, NULL, sInstance, NULL);
 		if (!*sCtrlDefs[i].wnd)
 			err("Failed to create window");
 	} 
 }
 
+static void
+relayout(void)
+{
+	int i;
+
+	for (i=0; i < (int)LEN(sCtrlDefs); i++)
+		MoveWindow(*sCtrlDefs[i].wnd,
+		    MulDiv(sCtrlDefs[i].x, sDpi, 96),
+		    MulDiv(sCtrlDefs[i].y, sDpi, 96),
+		    MulDiv(sCtrlDefs[i].w, sDpi, 96),
+		    MulDiv(sCtrlDefs[i].h, sDpi, 96), TRUE);
+}
+
 static LRESULT CALLBACK
 wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
+	RECT *rectp;
+
 	switch (msg) {
 	case WM_SYSCOLORCHANGE:
 	case CPAT_WM_THEMECHANGED:
 		applySystemFont();
+		return 0;
+	case CPAT_WM_DPICHANGED:
+		sDpi = HIWORD(wparam);
+		rectp = (RECT *)lparam;
+
+		relayout();
+		applySystemFont();
+		MoveWindow(wnd, rectp->left, rectp->top,
+		    rectp->right - rectp->left,
+		    rectp->bottom - rectp->top, TRUE);
 		return 0;
 	case WM_COMMAND:
 		if ((HWND)lparam == sQuitBtn)
