@@ -198,7 +198,7 @@ sendWol(void)
 	if (RegCreateKeyExA(HKEY_CURRENT_USER, "SOFTWARE\\Netwake", 0, NULL,
 	    REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, NULL)
 	    == ERROR_SUCCESS) {
-		RegSetKeyValue(key, NULL, "LastAddress", REG_SZ, buf,
+		RegSetValueEx(key, "LastAddress", 0, REG_SZ, (BYTE *)buf,
 		    strlen(buf)+1);
 		RegCloseKey(key);
 	}
