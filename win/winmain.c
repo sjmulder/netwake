@@ -462,9 +462,9 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 
 	case DM_GETDEFID:
 		focus = GetFocus();
-		if (focus == sMacField)
+		if (focus == sMacField || focus == sFavList)
 			return MAKELRESULT(ID_WAKEBTN, DC_HASDEFID);
-		else if (focus == sNameField || focus == sFavList)
+		else if (focus == sNameField)
 			return MAKELRESULT(ID_SAVEBTN, DC_HASDEFID);
 		else
 			return 0;
