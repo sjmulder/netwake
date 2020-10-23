@@ -77,6 +77,12 @@ err(int code, const char *msg)
 	ExitProcess(code);
 }
 
+static inline int
+scale(int magnitude)
+{
+	return MulDiv(magnitude, sFontSize, 8);
+}
+
 static void
 loadFunctions(void)
 {
@@ -134,10 +140,8 @@ createControls(void)
 		    sCtrlDefs[i].exStyle,
 		    sCtrlDefs[i].className, sCtrlDefs[i].text,
 		    sCtrlDefs[i].style | WS_VISIBLE | WS_CHILD,
-		    MulDiv(sCtrlDefs[i].x, sFontSize, 8),
-		    MulDiv(sCtrlDefs[i].y, sFontSize, 8),
-		    MulDiv(sCtrlDefs[i].w, sFontSize, 8),
-		    MulDiv(sCtrlDefs[i].h, sFontSize, 8),
+		    scale(sCtrlDefs[i].x), scale(sCtrlDefs[i].y),
+		    scale(sCtrlDefs[i].w), scale(sCtrlDefs[i].h),
 		    sWnd, NULL, sInstance, NULL);
 
 		if (!*sCtrlDefs[i].wnd)
@@ -158,10 +162,8 @@ relayoutControls(void)
 		    MAKELPARAM(FALSE, 0));
 
 		MoveWindow(*sCtrlDefs[i].wnd,
-		    MulDiv(sCtrlDefs[i].x, sFontSize, 8),
-		    MulDiv(sCtrlDefs[i].y, sFontSize, 8),
-		    MulDiv(sCtrlDefs[i].w, sFontSize, 8),
-		    MulDiv(sCtrlDefs[i].h, sFontSize, 8), TRUE);
+		    scale(sCtrlDefs[i].x), scale(sCtrlDefs[i].y),
+		    scale(sCtrlDefs[i].w), scale(sCtrlDefs[i].h), TRUE);
 	}
 }
 
@@ -371,10 +373,8 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		GetWindowRect(sWnd, &frame);
 		GetClientRect(sWnd, &client);
 
-		frame.right -= client.right;
-		frame.right += MulDiv(sWndSize.right, sFontSize, 8);
-		frame.bottom -= client.bottom;
-		frame.bottom += MulDiv(sWndSize.bottom, sFontSize, 8);
+		frame.right += scale(sWndSize.right) - client.right;
+		frame.bottom += scale(sWndSize.bottom) - client.bottom;
 
 		AdjustWindowRect(&client, sWndStyle, FALSE);
 		MoveWindow(sWnd, frame.left, frame.top,
@@ -468,8 +468,8 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 		err(1, "RegisterClass failed.");
 
 	rect = sWndSize;
-	rect.right = MulDiv(rect.right, sFontSize, 8);
-	rect.bottom = MulDiv(rect.bottom, sFontSize, 8);
+	rect.right = scale(rect.right);
+	rect.bottom = scale(rect.bottom);
 
 	if (!AdjustWindowRect(&rect, sWndStyle, FALSE))
 		err(1, "AdjustWindowRect() failed.");
