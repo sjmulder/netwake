@@ -18,7 +18,8 @@ netwake.exe: winmain.o resource.o wol.o util.o
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 netwake.fd: netwake.exe
-	/sbin/mkfs.msdos -C netwake.fd.tmp 1440 >/dev/null
+	dd if=/dev/zero of=netwake.fd.tmp bs=1440K count=1 status=none
+	mformat -i netwake.fd.tmp -f 1440 -v netwake ::
 	mcopy -i netwake.fd.tmp netwake.exe ::/
 	mv netwake.fd.tmp netwake.fd
 
