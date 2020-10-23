@@ -44,7 +44,7 @@ static HWND sQuitBtn, sDelBtn, sSaveBtn;
 
 static const struct {
 	HWND *wnd;
-	int x, y, w, h; /* in 1/8ths of font height, usually a pixel */
+	int x, y, w, h; /* 1px @ 96 DPI @ classic Windows (95+) font size */
 	const char *className;
 	const char *text;
 	DWORD style, exStyle;
