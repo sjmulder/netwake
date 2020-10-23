@@ -20,7 +20,7 @@ static const char sInfoText[] =
 
 static HINSTANCE sInstance;
 static HFONT sFont;
-static WORD sDpi = 96;
+static WORD sBaseDpi = 96, sDpi = 96;
 
 static HWND sWnd;
 static HWND sInfoFrame, sInfoLabel;
@@ -80,8 +80,8 @@ applySystemFont(void)
 	    	err("SystemParametersInfo failed");
 
 	lfont = &metrics.lfMessageFont;
-	lfont->lfHeight = MulDiv(lfont->lfHeight, sDpi, 96);
-	lfont->lfWidth = MulDiv(lfont->lfWidth, sDpi, 96);
+	lfont->lfHeight = MulDiv(lfont->lfHeight, sDpi, sBaseDpi);
+	lfont->lfWidth = MulDiv(lfont->lfWidth, sDpi, sBaseDpi);
 
 	if (!(sFont = CreateFontIndirect(lfont)))
 		err("CreateFontIndirect failed");
@@ -182,7 +182,12 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 	if (!RegisterClass(&wc))
 		err("RegisterClass failed");
 
+	sBaseDpi = sDpi = GetDpiForSystem();
+
 	rect = sWndSize;
+	rect.right  = MulDiv(rect.right, sDpi, 96);
+	rect.bottom = MulDiv(rect.bottom, sDpi, 96);
+
 	if (!AdjustWindowRect(&rect, sWndStyle, FALSE))
 		err("AdjustWindowRect failed");
 
