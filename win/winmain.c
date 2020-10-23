@@ -6,15 +6,13 @@
 #include "../util.h"
 #include "../wol.h"
 #include "resource.h"
+#include "shims.h"
 
 #define CPAT_WM_THEMECHANGED	0x031A
 #define CPAT_WM_DPICHANGED	0x02E0
 
 #define ID_WAKEBTN	101
 #define ID_SAVEBTN	102
-
-static UINT (*sGetDpiForSystem)(void);
-static UINT (*sInitCommonControls)(void);
 
 static const char sClassName[] = "Netwake";
 static const DWORD sWndStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU |
@@ -109,22 +107,6 @@ scale(int magnitude)
 	 * 3. Scale by font size (8 as base):           sFontSize/8
 	 */
 	return MulDiv(magnitude, 72 * sDpi * sFontSize, sBaseDpi * 96 * 8);
-}
-
-static void
-loadFunctions(void)
-{
-	HMODULE lib;
-
-	if ((lib = LoadLibrary("user32.dll"))) {
-		sGetDpiForSystem = (void *)GetProcAddress(lib,
-		    "GetDpiForSystem");
-	}
-
-	if ((lib = LoadLibrary("comctl32.dll"))) {
-		sInitCommonControls = (void *)GetProcAddress(lib,
-		    "InitCommonControls");
-	}
 }
 
 static void
@@ -529,14 +511,12 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 	
 	sInstance = instance;
 
-	loadFunctions();
+	if (ShimsInit() == -1)
+		err(IDS_ESHIMS);
+
 	setupWinsock();
-
-	if (sInitCommonControls)
-		sInitCommonControls();
-	if (sGetDpiForSystem)
-		sBaseDpi = sDpi = sGetDpiForSystem();
-
+	InitCommonControls();
+	sBaseDpi = sDpi = GetDpiForSystem();
 	loadFont();
 
 	accel = LoadAccelerators(sInstance, MAKEINTRESOURCE(IDA_ACCELS));
