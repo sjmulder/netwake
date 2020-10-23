@@ -10,6 +10,9 @@
 #define CPAT_WM_THEMECHANGED	0x031A
 #define CPAT_WM_DPICHANGED	0x02E0
 
+#define ID_WAKEBTN	101
+#define ID_SAVEBTN	102
+
 static UINT (*sGetDpiForSystem)(void);
 
 static const char sClassName[] = "Netwake";
@@ -42,25 +45,29 @@ static const struct {
 	HWND *wnd;
 	int x, y, w, h; /* 1/8th of font size (1px on Windows 95-XP) */
 	const char *className;
-	int textRes;
+	int id, textRes;
 	DWORD style, exStyle;
 } sCtrlDefs[] = {
-	{&sInfoFrame, -8, -16, 168, 298, "BUTTON", 0, WS_GROUP | BS_GROUPBOX, 0},
-	{&sInfoLabel, 8, 8, 140, 256, "STATIC", IDS_INFOTEXT, 0, 0},
-	{&sMacLabel, 168, 10, 96, 17, "STATIC", IDS_MACLABEL, 0, 0},
-	{&sMacField, 264, 8, 184, 21, "EDIT", 0, WS_TABSTOP, WS_EX_CLIENTEDGE},
-	{&sWakeBtn, 373, 33, 75, 23, "BUTTON", IDS_WAKEBTN, WS_TABSTOP, 0},
-	{&sNameLabel, 168, 74, 96, 17, "STATIC", IDS_NAMELABEL, 0, 0},
-	{&sNameField, 264, 72, 184, 21, "EDIT", 0, WS_TABSTOP ,
+	{&sInfoFrame, -8, -16, 168, 298, "BUTTON", 0, 0, WS_GROUP | BS_GROUPBOX,
+	    0},
+	{&sInfoLabel, 8, 8, 140, 256, "STATIC", 0, IDS_INFOTEXT, 0, 0},
+	{&sMacLabel, 168, 10, 96, 17, "STATIC", 0, IDS_MACLABEL, 0, 0},
+	{&sMacField, 264, 8, 184, 21, "EDIT", 0, 0, WS_TABSTOP,
 	    WS_EX_CLIENTEDGE},
-	{&sFavLabel, 168, 98, 96, 17, "STATIC", IDS_FAVLABEL, 0, 0},
-	{&sFavList, 264, 96, 184, 140, "LISTBOX", 0, WS_TABSTOP | WS_VSCROLL |
+	{&sWakeBtn, 373, 33, 75, 23, "BUTTON", ID_WAKEBTN, IDS_WAKEBTN,
+	    WS_TABSTOP | BS_DEFPUSHBUTTON, 0},
+	{&sNameLabel, 168, 74, 96, 17, "STATIC", 0, IDS_NAMELABEL, 0, 0},
+	{&sNameField, 264, 72, 184, 21, "EDIT", 0, 0, WS_TABSTOP ,
+	    WS_EX_CLIENTEDGE},
+	{&sFavLabel, 168, 98, 96, 17, "STATIC", 0, IDS_FAVLABEL, 0, 0},
+	{&sFavList, 264, 96, 184, 140, "LISTBOX", 0, 0, WS_TABSTOP | WS_VSCROLL |
 	    LBS_SORT | LBS_NOTIFY | LBS_WANTKEYBOARDINPUT |
 	    LBS_NOINTEGRALHEIGHT, WS_EX_CLIENTEDGE},
-	{&sQuitBtn, 8, 240, 75, 23, "BUTTON", IDS_QUITBTN, WS_TABSTOP, 0},
-	{&sDelBtn, 293, 240, 75, 23, "BUTTON", IDS_DELBTN, WS_TABSTOP |
+	{&sQuitBtn, 8, 240, 75, 23, "BUTTON", 0, IDS_QUITBTN, WS_TABSTOP, 0},
+	{&sDelBtn, 293, 240, 75, 23, "BUTTON", 0, IDS_DELBTN, WS_TABSTOP |
 	    WS_DISABLED, 0},
-	{&sSaveBtn, 373, 240, 75, 23, "BUTTON", IDS_SAVEBTN, WS_TABSTOP, 0}
+	{&sSaveBtn, 373, 240, 75, 23, "BUTTON", ID_SAVEBTN, IDS_SAVEBTN,
+	    WS_TABSTOP, 0}
 };
 
 
@@ -170,7 +177,7 @@ createControls(void)
 		    sCtrlDefs[i].style | WS_VISIBLE | WS_CHILD,
 		    scale(sCtrlDefs[i].x), scale(sCtrlDefs[i].y),
 		    scale(sCtrlDefs[i].w), scale(sCtrlDefs[i].h),
-		    sWnd, NULL, sInstance, NULL);
+		    sWnd, (HMENU)sCtrlDefs[i].id, sInstance, NULL);
 		if (!*sCtrlDefs[i].wnd)
 			err(IDS_ECREATEWND);
 
@@ -403,6 +410,18 @@ sendWol(void)
 	}
 }
 
+static void
+updateDefBtn(void)
+{
+	WORD id;
+
+	id = LOWORD(SendMessage(sWnd, DM_GETDEFID, 0, 0));
+	SendMessage(sWakeBtn, BM_SETSTYLE,
+	    id == ID_WAKEBTN ? BS_DEFPUSHBUTTON : 0, MAKELPARAM(TRUE, 0));
+	SendMessage(sSaveBtn, BM_SETSTYLE,
+	    id == ID_SAVEBTN ? BS_DEFPUSHBUTTON : 0, MAKELPARAM(TRUE, 0));
+}
+
 static LRESULT CALLBACK
 wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
@@ -439,8 +458,18 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		    rectp->bottom - rectp->top, TRUE);
 		return 0;
 
+	case DM_GETDEFID:
+		focus = GetFocus();
+		if (focus == sMacField)
+			return MAKELRESULT(ID_WAKEBTN, DC_HASDEFID);
+		else if (focus == sNameField || focus == sFavList)
+			return MAKELRESULT(ID_SAVEBTN, DC_HASDEFID);
+		else
+			return 0;
+
 	case WM_COMMAND:
 		focus = GetFocus();
+
 		if ((HWND)lparam == sQuitBtn)
 			DestroyWindow(sWnd);
 		else if ((HWND)lparam == sWakeBtn)
@@ -454,6 +483,8 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 			deleteFav();
 		else if ((HWND)lparam == sSaveBtn)
 			saveFav();
+		else if (HIWORD(wparam) == EN_SETFOCUS || HIWORD(wparam) == LBN_SETFOCUS)
+			updateDefBtn();
 		else if (lparam) /* accelerators from here on */
 			break;
 		else if (LOWORD(wparam) == IDC_ENTER && focus == sMacField)
