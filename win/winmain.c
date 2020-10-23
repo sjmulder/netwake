@@ -3,9 +3,10 @@
 #include <windows.h>
 #include <winsock.h>
 #include <commctrl.h>
-#include "../util.h"
 #include "../wol.h"
 #include "resource.h"
+
+#define LEN(a) (sizeof(a)/sizeof(*(a)))
 
 #define CPAT_WM_THEMECHANGED	0x031A
 #define CPAT_WM_DPICHANGED	0x02E0

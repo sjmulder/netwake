@@ -1,9 +1,10 @@
 #include "wol.h"
-#include "util.h"
 
 #ifdef _WIN32
 # include <winsock.h>
 #endif
+
+#define LEN(a) (sizeof(a)/sizeof(*(a)))
 
 typedef struct WolPacket {char zeroes[6]; tMacAddr macs[16];} tWolPacket;
 
