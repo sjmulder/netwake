@@ -1,8 +1,10 @@
 CC=		i686-w64-mingw32-gcc
 RES=		i686-w64-mingw32-windres
 
-CFLAGS+=	-Os -Wall -Wextra -DNOSTDLIB
+CFLAGS+=	-Os -Wall -Wextra -fPIE -DNOSTDLIB
 LDFLAGS+=	-s -mwindows -nostdlib
+# -pie breaks the executable for non-Win32s
+LDFLAGS+=	-Wl,--dynamicbase,--export-all-symbols
 LDLIBS+=	-lkernel32 -luser32 -lgdi32 -lcomctl32 -ladvapi32 -lws2_32
 
 VPATH+=		../
