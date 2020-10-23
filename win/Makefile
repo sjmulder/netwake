@@ -5,7 +5,7 @@ CFLAGS+=	-Os -Wall -Wextra -fPIE -DNOSTDLIB
 LDFLAGS+=	-s -mwindows -nostdlib
 # -pie breaks the executable for non-Win32s
 LDFLAGS+=	-Wl,--dynamicbase,--export-all-symbols
-LDLIBS+=	-lkernel32 -luser32 -lgdi32 -ladvapi32 -lws2_32
+LDLIBS+=	-lkernel32 -luser32 -lgdi32 -ladvapi32 -lwsock32
 
 VPATH+=		../
 

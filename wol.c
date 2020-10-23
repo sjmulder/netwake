@@ -2,7 +2,7 @@
 #include "util.h"
 
 #ifdef _WIN32
-# include <winsock2.h>
+# include <winsock.h>
 #endif
 
 typedef struct WolPacket {char zeroes[6]; tMacAddr macs[16];} tWolPacket;

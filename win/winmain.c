@@ -1,7 +1,7 @@
 #define WIN32_LEAN_AND_MEAN
 
 #include <windows.h>
-#include <winsock2.h>
+#include <winsock.h>
 #include <commctrl.h>
 #include "../util.h"
 #include "../wol.h"
@@ -132,7 +132,7 @@ setupWinsock(void)
 {
 	WSADATA data;
 
-	if (WSAStartup(MAKEWORD(2, 0), &data))
+	if (WSAStartup(MAKEWORD(1, 1), &data))
 		err(IDS_ESOCKSETUP);
 }
 
