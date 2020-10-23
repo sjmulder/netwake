@@ -1,12 +1,9 @@
 CC=		i686-w64-mingw32-gcc
 RES=		i686-w64-mingw32-windres
 
-CFLAGS+=	-Os -Wall -Wextra
-LDFLAGS+=	-mwindows -s
-LDLIBS+=	-lkernel32 -luser32 -lgdi32 -lcomctl32 -lws2_32
-
-#CFLAGS+=	-DNOSTDLIB
-#LDFLAGS+=	-nostdlib -ffreestanding
+CFLAGS+=	-Os -Wall -Wextra -DNOSTDLIB
+LDFLAGS+=	-s -mwindows -nostdlib
+LDLIBS+=	-lkernel32 -luser32 -lgdi32 -lcomctl32 -ladvapi32 -lws2_32
 
 VPATH+=		../
 

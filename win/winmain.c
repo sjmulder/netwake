@@ -587,6 +587,11 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 void
 WinMainCRTStartup(void)
 {
-	ExitProcess(WinMain(GetModuleHandle(NULL), NULL, "", 0));
+	HINSTANCE instance;
+	int st;
+
+	instance = GetModuleHandle(NULL);
+	st = WinMain(instance, NULL, "", SW_SHOWNORMAL);
+	ExitProcess(st);
 }
 #endif
