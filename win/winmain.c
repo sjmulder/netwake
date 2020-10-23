@@ -17,13 +17,6 @@ static const DWORD sWndStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU |
     WS_MINIMIZEBOX;
 static const RECT sWndSize = {0, 0, 456, 272};
 
-static const char sInfoText[] =
-"Turn on a computer by sending it a Wake-on-LAN packet.\r\n\r\n"
-"The computer must be on the same network and have WOL enabled in its "
-"firmware.\r\n\r\n"
-"By Sijmen J. Mulder\r\n"
-"Contact: ik@sjmulder.nl";
-
 static const char sBadMacText[] =
 "Invalid MAC address.\r\n\r\n"
 "The address should consist of 6 pairs of hexadecimal digits (0-A), "
@@ -34,6 +27,8 @@ static HINSTANCE sInstance;
 static HFONT sFont;
 static WORD sBaseDpi = 96, sDpi = 96;
 static LONG sFontSize; /* system font, in pts */
+
+static char sAppTitle[128] = "Netwake";
 
 static HWND sWnd;
 static HWND sInfoFrame, sInfoLabel;
@@ -47,34 +42,31 @@ static const struct {
 	HWND *wnd;
 	int x, y, w, h; /* 1/8th of font size (1px on Windows 95-XP) */
 	const char *className;
-	const char *text;
+	int textRes;
 	DWORD style, exStyle;
 } sCtrlDefs[] = {
-	{&sInfoFrame, -8, -16, 168, 298, "BUTTON", "About",
-	    WS_GROUP | BS_GROUPBOX, 0},
-	{&sInfoLabel, 8, 8, 140, 256, "STATIC", sInfoText, 0, 0},
-	{&sMacLabel, 168, 10, 96, 17, "STATIC", "MAC &Address:", 0, 0},
-	{&sMacField, 264, 8, 184, 21, "EDIT", NULL, WS_TABSTOP,
+	{&sInfoFrame, -8, -16, 168, 298, "BUTTON", 0, WS_GROUP | BS_GROUPBOX, 0},
+	{&sInfoLabel, 8, 8, 140, 256, "STATIC", IDS_INFOTEXT, 0, 0},
+	{&sMacLabel, 168, 10, 96, 17, "STATIC", IDS_MACLABEL, 0, 0},
+	{&sMacField, 264, 8, 184, 21, "EDIT", 0, WS_TABSTOP, WS_EX_CLIENTEDGE},
+	{&sWakeBtn, 373, 33, 75, 23, "BUTTON", IDS_WAKEBTN, WS_TABSTOP, 0},
+	{&sNameLabel, 168, 74, 96, 17, "STATIC", IDS_NAMELABEL, 0, 0},
+	{&sNameField, 264, 72, 184, 21, "EDIT", 0, WS_TABSTOP ,
 	    WS_EX_CLIENTEDGE},
-	{&sWakeBtn, 373, 33, 75, 23, "BUTTON", "&Wake", WS_TABSTOP, 0},
-	{&sNameLabel, 168, 74, 96, 17, "STATIC", "&Name:", 0, 0},
-	{&sNameField, 264, 72, 184, 21, "EDIT", NULL, WS_TABSTOP ,
-	    WS_EX_CLIENTEDGE},
-	{&sFavLabel, 168, 98, 96, 17, "STATIC", "&Favourites:", 0, 0},
-	{&sFavList, 264, 96, 184, 140, "LISTBOX", NULL,
-	    WS_TABSTOP | WS_VSCROLL |  LBS_SORT | LBS_NOTIFY |
-	    LBS_WANTKEYBOARDINPUT | LBS_NOINTEGRALHEIGHT,
-	    WS_EX_CLIENTEDGE},
-	{&sQuitBtn, 8, 240, 75, 23, "BUTTON", "&Quit", WS_TABSTOP, 0},
-	{&sDelBtn, 293, 240, 75, 23, "BUTTON", "&Delete",
-	    WS_TABSTOP | WS_DISABLED, 0},
-	{&sSaveBtn, 373, 240, 75, 23, "BUTTON", "&Save", WS_TABSTOP, 0}
+	{&sFavLabel, 168, 98, 96, 17, "STATIC", IDS_FAVLABEL, 0, 0},
+	{&sFavList, 264, 96, 184, 140, "LISTBOX", 0, WS_TABSTOP | WS_VSCROLL |
+	    LBS_SORT | LBS_NOTIFY | LBS_WANTKEYBOARDINPUT |
+	    LBS_NOINTEGRALHEIGHT, WS_EX_CLIENTEDGE},
+	{&sQuitBtn, 8, 240, 75, 23, "BUTTON", IDS_QUITBTN, WS_TABSTOP, 0},
+	{&sDelBtn, 293, 240, 75, 23, "BUTTON", IDS_DELBTN, WS_TABSTOP |
+	    WS_DISABLED, 0},
+	{&sSaveBtn, 373, 240, 75, 23, "BUTTON", IDS_SAVEBTN, WS_TABSTOP, 0}
 };
 
 void __declspec(noreturn)
 err(int code, const char *msg)
 {
-	MessageBox(sWnd, msg, "Netwake", MB_OK | MB_ICONEXCLAMATION);
+	MessageBox(sWnd, msg, sAppTitle, MB_OK | MB_ICONEXCLAMATION);
 	ExitProcess(code);
 }
 
@@ -133,18 +125,21 @@ loadFont(void)
 	if (sFont)
 		DeleteObject(sFont);
 	if (!(sFont = CreateFontIndirect(lfont)))
-		err(1, "CreateFontIndirect() failed.");
+		err("CreateFontIndirect() failed.");
 }
 
 static void
 createControls(void)
 {
 	int i;
+	char str[512];
 
 	for (i=0; i < (int)LEN(sCtrlDefs); i++) {
+		str[0] = '\0';
+		LoadString(sInstance, sCtrlDefs[i].textRes, str, sizeof(str));
+
 		*sCtrlDefs[i].wnd = CreateWindowEx(
-		    sCtrlDefs[i].exStyle,
-		    sCtrlDefs[i].className, sCtrlDefs[i].text,
+		    sCtrlDefs[i].exStyle, sCtrlDefs[i].className, str,
 		    sCtrlDefs[i].style | WS_VISIBLE | WS_CHILD,
 		    scale(sCtrlDefs[i].x), scale(sCtrlDefs[i].y),
 		    scale(sCtrlDefs[i].w), scale(sCtrlDefs[i].h),
@@ -228,12 +223,12 @@ saveFav(void)
 
 	if (!strlen(macStr) || !strlen(name)) {
 		MessageBox(sWnd, "Enter a MAC address and a name first to "
-		    "save it.", "Netwake", MB_ICONEXCLAMATION | MB_OK);
+		    "save it.", sAppTitle, MB_ICONEXCLAMATION | MB_OK);
 		return;
 	}
 
 	if (ParseMacAddr(macStr, &mac) == -1) {
-		MessageBox(sWnd, sBadMacText, "Netwake",
+		MessageBox(sWnd, sBadMacText, sAppTitle,
 		    MB_ICONEXCLAMATION | MB_OK);
 		return;
 	}
@@ -343,7 +338,7 @@ sendWol(void)
 	GetWindowText(sMacField, buf, sizeof(buf));
 
 	if (ParseMacAddr(buf, &mac) == -1) {
-		MessageBox(sWnd, sBadMacText, "Netwake",
+		MessageBox(sWnd, sBadMacText, sAppTitle,
 		    MB_ICONEXCLAMATION | MB_OK);
 		return;
 	}
@@ -352,7 +347,7 @@ sendWol(void)
 	SetWindowText(sMacField, buf);
 	SendWolPacket(&mac);
 
-	MessageBox(sWnd, "Wake-on-LAN packet sent!", "Netwake",
+	MessageBox(sWnd, "Wake-on-LAN packet sent!", sAppTitle,
 	    MB_ICONINFORMATION | MB_OK);
 
 	lret = RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\Netwake", 0, NULL,
@@ -464,6 +459,8 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 	if (!accel)
 		err(1, "LoadAccelerators() failed.");
 
+	LoadString(sInstance, IDS_APPTITLE, sAppTitle, sizeof(sAppTitle));
+
 	ZeroMemory(&wc, sizeof(wc));
 	wc.hInstance = instance;
 	wc.lpszClassName = sClassName;
@@ -480,7 +477,7 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 	if (!AdjustWindowRect(&rect, sWndStyle, FALSE))
 		err(1, "AdjustWindowRect() failed.");
 
-	sWnd = CreateWindow(sClassName, "Netwake", sWndStyle,
+	sWnd = CreateWindow(sClassName, sAppTitle, sWndStyle,
 	    CW_USEDEFAULT, CW_USEDEFAULT,
 	    rect.right - rect.left, rect.bottom - rect.top,
 	    NULL, NULL, instance, NULL);

@@ -53,3 +53,44 @@ IDA_ACCELS ACCELERATORS {
 	VK_RETURN, IDC_ENTER, VIRTKEY
 	VK_DELETE, IDC_DELETE, VIRTKEY
 }
+
+STRINGTABLE
+	LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
+{
+	IDS_APPTITLE	"Netwake"
+
+	IDS_INFOTEXT	"\
+Turn on a computer by sending it a Wake-on-LAN packet.\r\n\r\n\
+The computer must be on the same network and have WOL enabled in its \
+firmware.\r\n\r\n\
+By Sijmen J. Mulder.\r\n\
+Contact: ik@sjmulder.nl"
+
+	IDS_MACLABEL	"MAC &Address:"
+	IDS_WAKEBTN	"&Wake"
+	IDS_NAMELABEL	"&Name:"
+	IDS_FAVLABEL	"&Favourites:"
+	IDS_QUITBTN	"&Quit"
+	IDS_DELBTN	"&Delete"
+	IDS_SAVEBTN	"&Save"
+}
+
+STRINGTABLE
+	LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
+{
+	IDS_APPTITLE	"Netwake"
+	IDS_INFOTEXT	"\
+Schakel op afstand een computer in met een Wake-on-LAN packet.\r\n\t\n\
+De computer moet zich op hetzelfde netwerk bevinden en WOL moet ingeschaked \
+zijn in de firmware.\r\n\r\n\
+Door Sijmen J. Mulder.\r\n\
+Contact: ik@sjmulder.nl"
+
+	IDS_MACLABEL	"MAC-&adres:"
+	IDS_NAMELABEL	"&Naam:"
+	IDS_WAKEBTN	"&Start"
+	IDS_FAVLABEL	"&Favorieten:"
+	IDS_QUITBTN	"S&luiten"
+	IDS_DELBTN	"&Verwijderen"
+	IDS_SAVEBTN	"Op&slaan"
+}
