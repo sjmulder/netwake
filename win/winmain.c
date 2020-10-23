@@ -423,7 +423,7 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 	wc.hbrBackground = (HBRUSH)(COLOR_BTNFACE+1);
 
 	if (!RegisterClass(&wc))
-		err(1, "RegisterClass failed");
+		err(1, "RegisterClass failed.");
 
 	if (sGetDpiForSystem)
 		sBaseDpi = sDpi = sGetDpiForSystem();
@@ -433,7 +433,7 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 	rect.bottom = MulDiv(rect.bottom, sDpi, 96);
 
 	if (!AdjustWindowRect(&rect, sWndStyle, FALSE))
-		err(1, "AdjustWindowRect failed");
+		err(1, "AdjustWindowRect() failed.");
 
 	sWnd = CreateWindow(sClassName, "Netwake", sWndStyle,
 	    CW_USEDEFAULT, CW_USEDEFAULT,
