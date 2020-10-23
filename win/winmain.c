@@ -77,6 +77,7 @@ loadFunctions(void)
 
 	if (!(user32 = LoadLibrary("user32.dll")))
 		err("LoadLibrary(user32.dl) failed");
+
 	sGetDpiForSystem = (void *)GetProcAddress(user32, "GetDpiForSystem");
 }
 
