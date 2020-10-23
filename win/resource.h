@@ -1,0 +1,4 @@
+#define IDA_ACCELS	101
+
+#define IDC_ENTER	201
+#define IDC_DELETE	202

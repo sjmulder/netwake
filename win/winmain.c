@@ -5,6 +5,7 @@
 #include <commctrl.h>
 #include "../util.h"
 #include "../wol.h"
+#include "resource.h"
 
 #define CPAT_WM_THEMECHANGED	0x031A
 #define CPAT_WM_DPICHANGED	0x02E0
@@ -352,6 +353,7 @@ static LRESULT CALLBACK
 wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
 	RECT *rectp;
+	HWND focus;
 
 	switch (msg) {
 	case WM_SYSCOLORCHANGE:
@@ -369,6 +371,7 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		    rectp->bottom - rectp->top, TRUE);
 		return 0;
 	case WM_COMMAND:
+		focus = GetFocus();
 		if ((HWND)lparam == sQuitBtn)
 			DestroyWindow(sWnd);
 		else if ((HWND)lparam == sWakeBtn)
@@ -382,15 +385,23 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 			deleteFav();
 		else if ((HWND)lparam == sSaveBtn)
 			saveFav();
+		else if (lparam)
+			break;
+		else if (LOWORD(wparam) == IDC_ENTER && focus == sMacField)
+			sendWol();
+		else if (LOWORD(wparam) == IDC_ENTER && focus == sNameField)
+			saveFav();
+		else if (LOWORD(wparam) == IDC_ENTER && focus == sFavList) {
+			if (loadFav() != -1)
+				sendWol();
+		}
+		else if (LOWORD(wparam) == IDC_DELETE && focus == sFavList)
+			deleteFav();
+		else if (LOWORD(wparam) == IDC_DELETE) /* ugh */
+			SendMessage(focus, WM_KEYDOWN, VK_DELETE, 0);
 		else
 			break;
 		return 0;
-	case WM_VKEYTOITEM:
-		if ((HWND)lparam == sFavList && LOWORD(wparam) == VK_DELETE) {
-			deleteFav();
-			return 2;
-		}
-		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		return 0;
@@ -402,6 +413,7 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 int WINAPI
 WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 {
+	HACCEL accel;
 	WNDCLASS wc;
 	RECT rect;
 	MSG msg;
@@ -415,6 +427,10 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 	loadFunctions();
 	setupWinsock();
 	InitCommonControls();
+
+	accel = LoadAccelerators(sInstance, MAKEINTRESOURCE(IDA_ACCELS));
+	if (!accel)
+		err(1, "LoadAccelerators() failed.");
 
 	ZeroMemory(&wc, sizeof(wc));
 	wc.hInstance = instance;
@@ -449,6 +465,8 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 	ShowWindow(sWnd, showCmd);
 
 	while ((ret = GetMessage(&msg, NULL, 0, 0)) > 0) {
+		if (TranslateAccelerator(sWnd, accel, &msg))
+			continue;
 		if (IsDialogMessage(sWnd, &msg))
 			continue;
 		TranslateMessage(&msg);
