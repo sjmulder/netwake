@@ -14,11 +14,14 @@ protocol.
 
  1. Enable Wake-on-LAN on the target computer. Note the network card's MAC
     address.
+ 2. Download Netwake from the
+    [Releases](https://github.com/sjmulder/netwake/releases) page.
  2. On another computer connected to the same network, run Netwake, enter the
     MAC address, and click Wake. The magic packet will be sent and the computer
     should wake up.
 
-Problems? Missing features? Ideas? Open an issue!
+Problems? Missing features? Ideas? File an
+[issue](https://github.com/sjmulder/netwake/issues)!
 
 Requirements
 ------------
