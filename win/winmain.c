@@ -161,8 +161,8 @@ loadPrefs(void)
 		return;
 
 	sz = (DWORD)sizeof(buf);
-	if (RegQueryValueEx(key, "LastAddress", NULL, NULL, (BYTE *)buf, &sz)
-	    == ERROR_SUCCESS) {
+	if (RegGetValue(key, NULL, "LastAddress", RRF_RT_REG_SZ, NULL,
+	    (BYTE *)buf, &sz) == ERROR_SUCCESS) {
 		SetWindowText(sMacField, buf);
 		SendMessage(sMacField, EM_SETSEL, (WPARAM)0, (LPARAM)-1);
 	}
