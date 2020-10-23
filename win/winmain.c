@@ -25,6 +25,7 @@ static HINSTANCE sInstance;
 static HFONT sFont;
 static WORD sBaseDpi = 96, sDpi = 96;
 static LONG sFontSize = 11; /* system font, in pts */
+static BOOL sIs95Up;
 
 static char sAppTitle[128];
 
@@ -198,7 +199,7 @@ loadFunctions(void)
 		    "GetDpiForSystem");
 	}
 
-	if ((lib = LoadLibrary("comctl32.dll"))) {
+	if (sIs95Up && (lib = LoadLibrary("comctl32.dll"))) {
 		sInitCommonControls = (void *)GetProcAddress(lib,
 		    "InitCommonControls");
 	}
@@ -245,14 +246,18 @@ createControls(void)
 {
 	int i;
 	char str[512];
+	DWORD style;
 
 	for (i=0; i < (int)LEN(sCtrlDefs); i++) {
 		str[0] = '\0';
 		LoadString(sInstance, sCtrlDefs[i].textRes, str, sizeof(str));
 
+		style = sCtrlDefs[i].style | WS_VISIBLE | WS_CHILD;
+		if (!sIs95Up && (sCtrlDefs[i].exStyle & WS_EX_CLIENTEDGE))
+			style |= WS_BORDER;
+
 		*sCtrlDefs[i].wnd = CreateWindowEx(
-		    sCtrlDefs[i].exStyle, sCtrlDefs[i].className, str,
-		    sCtrlDefs[i].style | WS_VISIBLE | WS_CHILD,
+		    sCtrlDefs[i].exStyle, sCtrlDefs[i].className, str, style,
 		    scale(sCtrlDefs[i].x), scale(sCtrlDefs[i].y),
 		    scale(sCtrlDefs[i].w), scale(sCtrlDefs[i].h),
 		    sWnd, (HMENU)sCtrlDefs[i].id, sInstance, NULL);
@@ -613,6 +618,7 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 	(void)cmd;
 	
 	sInstance = instance;
+	sIs95Up = LOBYTE(LOWORD(GetVersion())) >= 4;
 
 	loadFunctions();
 	setupWinsock();
@@ -635,7 +641,7 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 	wc.hInstance = instance;
 	wc.lpszClassName = sClassName;
 	wc.lpfnWndProc = wndProc;
-	wc.hbrBackground = (HBRUSH)(COLOR_BTNFACE+1);
+	wc.hbrBackground = (HBRUSH)(sIs95Up ? COLOR_BTNFACE+1 : COLOR_WINDOW+1);
 
 	if (!RegisterClass(&wc))
 		errWin(IDS_EREGCLASS);
