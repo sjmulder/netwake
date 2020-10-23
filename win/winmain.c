@@ -173,6 +173,14 @@ sendWol(void)
 
 	MessageBox(sWnd, "Wake-on-LAN packet sent!", "Netwake",
 	    MB_ICONINFORMATION | MB_OK);
+
+	if (RegCreateKeyExA(HKEY_CURRENT_USER, "SOFTWARE\\Netwake", 0, NULL,
+	    REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, NULL)
+	    == ERROR_SUCCESS) {
+		RegSetKeyValue(key, NULL, "LastAddress", REG_SZ, buf,
+		    strlen(buf)+1);
+		RegCloseKey(key);
+	}
 }
 
 static LRESULT CALLBACK
