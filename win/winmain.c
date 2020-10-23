@@ -63,7 +63,7 @@ static const struct {
 	{&sSaveBtn, 373, 240, 75, 23, "BUTTON", IDS_SAVEBTN, WS_TABSTOP, 0}
 };
 
-void __declspec(noreturn)
+static void __declspec(noreturn)
 err(int code, const char *msg)
 {
 	MessageBox(sWnd, msg, sAppTitle, MB_OK | MB_ICONEXCLAMATION);
@@ -345,7 +345,9 @@ sendWol(void)
 
 	FormatMacAddr(&mac, buf);
 	SetWindowText(sMacField, buf);
-	SendWolPacket(&mac);
+
+	if (SendWolPacket(&mac) == -1)
+		err(1, "Failed to send packet.");
 
 	MessageBox(sWnd, "Wake-on-LAN packet sent!", sAppTitle,
 	    MB_ICONINFORMATION | MB_OK);

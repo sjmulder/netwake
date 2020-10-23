@@ -50,7 +50,7 @@ FormatMacAddr(const tMacAddr *mac, char *str)
 	str[i*3-1] = '\0';
 }
 
-void
+int
 SendWolPacket(const tMacAddr *mac)
 {
 	int i;
@@ -70,12 +70,14 @@ SendWolPacket(const tMacAddr *mac)
 	addr.sin_addr.S_un.S_addr = 0xFFFFFFFF;
 
 	if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET)
-		err(1, "socket() failed");
+		return -1;
 	if (connect(sock, (struct sockaddr *)&addr, sizeof(addr))
 	    == SOCKET_ERROR)
-		err(1, "connect() failed");
+		return -1;
 	if (send(sock, (void *)&wol, sizeof(wol), 0) == SOCKET_ERROR)
-		err(1, "send() failed");
+		return -1;
 
 	closesocket(sock);
+
+	return 0;
 }
