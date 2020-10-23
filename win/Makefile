@@ -5,6 +5,9 @@ CFLAGS+=	-Os -Wall -Wextra
 LDFLAGS+=	-mwindows -s
 LDLIBS+=	-lkernel32 -luser32 -lgdi32 -lcomctl32 -lws2_32
 
+#CFLAGS+=	-DNOSTDLIB
+#LDFLAGS+=	-nostdlib -ffreestanding
+
 VPATH+=		../
 
 all: netwake.exe
@@ -12,7 +15,7 @@ all: netwake.exe
 clean:
 	rm -f netwake.exe *.o
 
-netwake.exe: winmain.o resource.o wol.o
+netwake.exe: winmain.o resource.o wol.o util.o
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 resource.o: resource.rc

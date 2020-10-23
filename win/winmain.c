@@ -304,3 +304,11 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 
 	return msg.wParam;
 }
+
+#ifdef NOSTDLIB
+void
+WinMainCRTStartup(void)
+{
+	ExitProcess(WinMain(GetModuleHandle(NULL), NULL, "", 0));
+}
+#endif
