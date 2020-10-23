@@ -273,6 +273,36 @@ loadFav(void)
 }
 
 static void
+deleteFav()
+{
+	LRESULT idx, len;
+	char name[256];
+	HKEY key;
+
+	if ((idx = SendMessage(sFavList, LB_GETCURSEL, 0, 0)) == LB_ERR) {
+		EnableWindow(sDelBtn, FALSE);
+		return;
+	}
+
+	len = SendMessage(sFavList, LB_GETTEXTLEN, idx, 0);
+	if (!len || len >= sizeof(name))
+		err(1, "Invalid name.");
+	if (SendMessage(sFavList, LB_GETTEXT, idx, (LPARAM)name) == LB_ERR)
+		err(1, "LB_GETTEXT failed.");
+	name[len] = '\0';
+
+	if (RegOpenKeyEx(HKEY_CURRENT_USER, "SOFTWARE\\Netwake\\Favourites", 0,
+	    KEY_SET_VALUE, &key) != ERROR_SUCCESS)
+		err(1, "RegOpenKeyEx() failed.");
+	if (RegDeleteValue(key, name) != ERROR_SUCCESS)
+		err(1, "RegDeleteValue() failed.");
+	RegCloseKey(key);
+
+	SendMessage(sFavList, LB_DELETESTRING, idx, 0);
+	EnableWindow(sDelBtn, FALSE);
+}
+
+static void
 sendWol(void)
 {
 	char buf[256];
@@ -328,10 +358,12 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 			DestroyWindow(sWnd);
 		else if ((HWND)lparam == sWakeBtn)
 			sendWol();
-		else if ((HWND)lparam == sSaveBtn)
-			saveFav();
 		else if ((HWND)lparam == sFavList && HIWORD(wparam) == LBN_SELCHANGE)
 			loadFav();
+		else if ((HWND)lparam == sDelBtn)
+			deleteFav();
+		else if ((HWND)lparam == sSaveBtn)
+			saveFav();
 		else
 			break;
 		return 0;
