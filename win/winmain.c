@@ -78,7 +78,7 @@ applySystemFont(void)
 	if (!(sFont = CreateFontIndirect(&metrics.lfMessageFont)))
 		err("CreateFontIndirect failed");
 
-	for (i=0; i < LEN(sCtrlDefs); i++)
+	for (i=0; i < (int)LEN(sCtrlDefs); i++)
 		SendMessage(*sCtrlDefs[i].wnd, WM_SETFONT, (WPARAM)sFont,
 		    MAKELPARAM(FALSE, 0));
 }
@@ -88,7 +88,7 @@ createControls(void)
 {
 	int i;
 
-	for (i=0; i < LEN(sCtrlDefs); i++) {
+	for (i=0; i < (int)LEN(sCtrlDefs); i++) {
 		*sCtrlDefs[i].wnd = CreateWindowEx(
 		    sCtrlDefs[i].exStyle,
 		    sCtrlDefs[i].className, sCtrlDefs[i].text,
@@ -153,10 +153,12 @@ int WINAPI
 WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 {
 	WNDCLASS wc;
-
 	RECT rect;
 	MSG msg;
 	BOOL ret;
+
+	(void)prev;
+	(void)cmd;
 	
 	sInstance = instance;
 
