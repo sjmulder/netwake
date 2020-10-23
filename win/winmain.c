@@ -426,6 +426,7 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		    frame.right - frame.left,
 		    frame.bottom - frame.top, TRUE);
 		return 0;
+
 	case CPAT_WM_DPICHANGED:
 		sDpi = HIWORD(wparam);
 		rectp = (RECT *)lparam;
@@ -437,6 +438,7 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		    rectp->right - rectp->left,
 		    rectp->bottom - rectp->top, TRUE);
 		return 0;
+
 	case WM_COMMAND:
 		focus = GetFocus();
 		if ((HWND)lparam == sQuitBtn)
@@ -468,6 +470,7 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		else
 			break;
 		return 0;
+
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		return 0;
