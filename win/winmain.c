@@ -243,7 +243,7 @@ saveFav(void)
 		SendMessage(sFavList, LB_ADDSTRING, 0, (LPARAM)name);
 }
 
-static void
+static int
 loadFav(void)
 {
 	LRESULT idx, len;
@@ -254,7 +254,7 @@ loadFav(void)
 
 	if ((idx = SendMessage(sFavList, LB_GETCURSEL, 0, 0)) == LB_ERR) {
 		EnableWindow(sDelBtn, FALSE);
-		return;
+		return -1;
 	}
 
 	len = SendMessage(sFavList, LB_GETTEXTLEN, idx, 0);
@@ -267,7 +267,7 @@ loadFav(void)
 	ls = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Netwake\\Favourites", 0,
 	    KEY_READ, &key);
 	if (ls != ERROR_SUCCESS)
-		return;
+		return -1;
 
 	sz = (DWORD)sizeof(macStr);
 	ls = RegGetValue(key, NULL, name, RRF_RT_REG_SZ, NULL, (BYTE*)macStr, &sz);
@@ -279,6 +279,8 @@ loadFav(void)
 	SetWindowText(sMacField, macStr);
 	SetWindowText(sNameField, name);
 	EnableWindow(sDelBtn, TRUE);
+
+	return 0;
 }
 
 static void
@@ -372,7 +374,10 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 			sendWol();
 		else if ((HWND)lparam == sFavList && HIWORD(wparam) == LBN_SELCHANGE)
 			loadFav();
-		else if ((HWND)lparam == sDelBtn)
+		else if ((HWND)lparam == sFavList && HIWORD(wparam) == LBN_DBLCLK) {
+			if (loadFav() != -1)
+				sendWol();
+		} else if ((HWND)lparam == sDelBtn)
 			deleteFav();
 		else if ((HWND)lparam == sSaveBtn)
 			saveFav();
