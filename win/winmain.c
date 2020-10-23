@@ -150,6 +150,27 @@ relayout(void)
 }
 
 static void
+loadPrefs(void)
+{
+	HKEY key;
+	char buf[256];
+	DWORD sz;
+
+	if (RegOpenKeyEx(HKEY_CURRENT_USER, "SOFTWARE\\Netwake", 0, KEY_READ,
+	    &key) != ERROR_SUCCESS)
+		return;
+
+	sz = (DWORD)sizeof(buf);
+	if (RegQueryValueEx(key, "LastAddress", NULL, NULL, buf, &sz)
+	    == ERROR_SUCCESS) {
+		SetWindowText(sMacField, buf);
+		SendMessage(sMacField, EM_SETSEL, (WPARAM)0, (LPARAM)-1);
+	}
+
+	RegCloseKey(key);
+}
+
+static void
 sendWol(void)
 {
 	char buf[256];
@@ -264,6 +285,7 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 
 	createControls();
 	applySystemFont();
+	loadPrefs();
 	SetFocus(sMacField);
 	ShowWindow(sWnd, showCmd);
 
