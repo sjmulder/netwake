@@ -26,9 +26,9 @@ static const char sBadMacText[] =
 static HINSTANCE sInstance;
 static HFONT sFont;
 static WORD sBaseDpi = 96, sDpi = 96;
-static LONG sFontSize; /* system font, in pts */
+static LONG sFontSize = 11; /* system font, in pts */
 
-static char sAppTitle[128] = "Netwake";
+static char sAppTitle[128];
 
 static HWND sWnd;
 static HWND sInfoFrame, sInfoLabel;
@@ -63,11 +63,39 @@ static const struct {
 	{&sSaveBtn, 373, 240, 75, 23, "BUTTON", IDS_SAVEBTN, WS_TABSTOP, 0}
 };
 
-static void __declspec(noreturn)
-err(int code, const char *msg)
+
+static void
+warn(int msgRes)
 {
+	char msg[1024];
+
+	if (!LoadString(sInstance, msgRes, msg, sizeof(msg))) {
+		MessageBox(sWnd,  "An error occured, but the description is "
+		    "unavailable.", sAppTitle, MB_OK | MB_ICONEXCLAMATION);
+		return;
+	}
+
 	MessageBox(sWnd, msg, sAppTitle, MB_OK | MB_ICONEXCLAMATION);
-	ExitProcess(code);
+}
+
+static void __declspec(noreturn)
+err(int msgRes)
+{
+	warn(msgRes);
+	ExitProcess(1);
+}
+
+static void
+info(int msgRes)
+{
+	char msg[1024];
+
+	if (!LoadString(sInstance, msgRes, msg, sizeof(msg))) {
+		warn(IDS_ERESMISS);
+		return;
+	}
+
+	MessageBox(sWnd, msg, sAppTitle, MB_OK | MB_ICONINFORMATION);
 }
 
 static inline int
@@ -86,10 +114,9 @@ loadFunctions(void)
 {
 	HMODULE user32;
 
-	if (!(user32 = LoadLibrary("user32.dll")))
-		err(1, "LoadLibrary(user32.dl) failed");
-
-	sGetDpiForSystem = (void *)GetProcAddress(user32, "GetDpiForSystem");
+	if ((user32 = LoadLibrary("user32.dll"))) {
+		sGetDpiForSystem = (void *)GetProcAddress(user32, "GetDpiForSystem");
+	}
 }
 
 static void
@@ -98,7 +125,7 @@ setupWinsock(void)
 	WSADATA data;
 
 	if (WSAStartup(MAKEWORD(2, 0), &data))
-		err(1, "WSAStartup failed");
+		err(IDS_ESOCKSETUP);
 }
 
 static void
@@ -114,7 +141,7 @@ loadFont(void)
 	bret = SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(metrics),
 	    &metrics, 0);
 	if (!bret)
-		err(1, "SystemParametersInfo() failed.");
+		return; /* sFontSize has a suitable default */
 
 	sFontSize = -metrics.lfMessageFont.lfHeight;
 
@@ -124,8 +151,8 @@ loadFont(void)
 
 	if (sFont)
 		DeleteObject(sFont);
-	if (!(sFont = CreateFontIndirect(lfont)))
-		err("CreateFontIndirect() failed.");
+
+	sFont = CreateFontIndirect(lfont);
 }
 
 static void
@@ -144,12 +171,12 @@ createControls(void)
 		    scale(sCtrlDefs[i].x), scale(sCtrlDefs[i].y),
 		    scale(sCtrlDefs[i].w), scale(sCtrlDefs[i].h),
 		    sWnd, NULL, sInstance, NULL);
-
 		if (!*sCtrlDefs[i].wnd)
-			err(1, "CreateWindowEx() failed.");
+			err(IDS_ECREATEWND);
 
-		SendMessage(*sCtrlDefs[i].wnd, WM_SETFONT, (WPARAM)sFont,
-		    MAKELPARAM(FALSE, 0));
+		if (sFont)
+			SendMessage(*sCtrlDefs[i].wnd, WM_SETFONT,
+			    (WPARAM)sFont, MAKELPARAM(FALSE, 0));
 	}
 }
 
@@ -159,8 +186,9 @@ relayoutControls(void)
 	int i;
 
 	for (i=0; i < (int)LEN(sCtrlDefs); i++) {
-		SendMessage(*sCtrlDefs[i].wnd, WM_SETFONT, (WPARAM)sFont,
-		    MAKELPARAM(FALSE, 0));
+		if (sFont)
+			SendMessage(*sCtrlDefs[i].wnd, WM_SETFONT,
+			    (WPARAM)sFont, MAKELPARAM(FALSE, 0));
 
 		MoveWindow(*sCtrlDefs[i].wnd,
 		    scale(sCtrlDefs[i].x), scale(sCtrlDefs[i].y),
@@ -204,7 +232,7 @@ loadPrefs(void)
 		else if (lret == ERROR_NO_MORE_ITEMS)
 			break;
 		else
-			err(1, "RegEnumValue() failed");
+			err(IDS_EREGREAD);
 	}
 
 	RegCloseKey(key);
@@ -222,14 +250,12 @@ saveFav(void)
 	GetWindowText(sNameField, name, sizeof(name));
 
 	if (!strlen(macStr) || !strlen(name)) {
-		MessageBox(sWnd, "Enter a MAC address and a name first to "
-		    "save it.", sAppTitle, MB_ICONEXCLAMATION | MB_OK);
+		warn(IDS_REQNAMEMAC);
 		return;
 	}
 
 	if (ParseMacAddr(macStr, &mac) == -1) {
-		MessageBox(sWnd, sBadMacText, sAppTitle,
-		    MB_ICONEXCLAMATION | MB_OK);
+		warn(IDS_BADMAC);
 		return;
 	}
 
@@ -240,12 +266,12 @@ saveFav(void)
 	    "Software\\Netwake\\Favourites", 0, NULL, REG_OPTION_NON_VOLATILE,
 	    KEY_ALL_ACCESS, NULL, &key, NULL);
 	if (lret != ERROR_SUCCESS)
-		err(1, "RegCreateKeyExA() failed");
+		err(IDS_EREGWRITE);
 
 	lret = RegSetValueEx(key, name, 0, REG_SZ, (BYTE *)macStr,
 	    strlen(macStr)+1);
 	if (lret != ERROR_SUCCESS)
-		err(1, "RegSetValueEx() failed");
+		err(IDS_EREGWRITE);
 
 	RegCloseKey(key);
 
@@ -269,9 +295,9 @@ loadFav(void)
 
 	len = SendMessage(sFavList, LB_GETTEXTLEN, idx, 0);
 	if (!len || len >= (LRESULT)sizeof(name))
-		err(1, "Invalid name.");
+		err(IDS_ENAMEREAD);
 	if (SendMessage(sFavList, LB_GETTEXT, idx, (LPARAM)name) == LB_ERR)
-		err(1, "LB_GETTEXT failed.");
+		err(IDS_ENAMEREAD);
 	name[len] = '\0';
 
 	lret = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Netwake\\Favourites", 0,
@@ -282,9 +308,9 @@ loadFav(void)
 	sz = (DWORD)sizeof(macStr);
 	lret = RegQueryValueEx(key, name, NULL, &type, (BYTE *)macStr, &sz);
 	if (lret != ERROR_SUCCESS)
-		err(1, "RegGetValue() failed.");
+		err(IDS_EREGREAD);
 	if (type != REG_SZ)
-		err(1, "Registry value is of the wrong type.");
+		err(IDS_EREGREAD);
 
 	RegCloseKey(key);
 
@@ -310,17 +336,17 @@ deleteFav()
 
 	len = SendMessage(sFavList, LB_GETTEXTLEN, idx, 0);
 	if (!len || len >= (LRESULT)sizeof(name))
-		err(1, "Invalid name.");
+		err(IDS_ENAMEREAD);
 	if (SendMessage(sFavList, LB_GETTEXT, idx, (LPARAM)name) == LB_ERR)
-		err(1, "LB_GETTEXT failed.");
+		err(IDS_ENAMEREAD);
 	name[len] = '\0';
 
 	lret = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Netwake\\Favourites", 0,
 	    KEY_SET_VALUE, &key);
 	if (lret != ERROR_SUCCESS)
-		err(1, "RegOpenKeyEx() failed.");
+		err(IDS_EREGWRITE);
 	if (RegDeleteValue(key, name) != ERROR_SUCCESS)
-		err(1, "RegDeleteValue() failed.");
+		err(IDS_EREGWRITE);
 	RegCloseKey(key);
 
 	SendMessage(sFavList, LB_DELETESTRING, idx, 0);
@@ -338,8 +364,7 @@ sendWol(void)
 	GetWindowText(sMacField, buf, sizeof(buf));
 
 	if (ParseMacAddr(buf, &mac) == -1) {
-		MessageBox(sWnd, sBadMacText, sAppTitle,
-		    MB_ICONEXCLAMATION | MB_OK);
+		warn(IDS_BADMAC);
 		return;
 	}
 
@@ -347,10 +372,9 @@ sendWol(void)
 	SetWindowText(sMacField, buf);
 
 	if (SendWolPacket(&mac) == -1)
-		err(1, "Failed to send packet.");
+		err(IDS_ESOCKERR);
 
-	MessageBox(sWnd, "Wake-on-LAN packet sent!", sAppTitle,
-	    MB_ICONINFORMATION | MB_OK);
+	info(IDS_WOLSENT);
 
 	lret = RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\Netwake", 0, NULL,
 	    REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, NULL);
@@ -459,9 +483,10 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 
 	accel = LoadAccelerators(sInstance, MAKEINTRESOURCE(IDA_ACCELS));
 	if (!accel)
-		err(1, "LoadAccelerators() failed.");
+		err(IDS_ERESMISS);
 
-	LoadString(sInstance, IDS_APPTITLE, sAppTitle, sizeof(sAppTitle));
+	if (!LoadString(sInstance, IDS_APPTITLE, sAppTitle, sizeof(sAppTitle)))
+		err(IDS_ERESMISS);
 
 	ZeroMemory(&wc, sizeof(wc));
 	wc.hInstance = instance;
@@ -470,21 +495,20 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 	wc.hbrBackground = (HBRUSH)(COLOR_BTNFACE+1);
 
 	if (!RegisterClass(&wc))
-		err(1, "RegisterClass failed.");
+		err(IDS_EREGCLASS);
 
 	rect = sWndSize;
 	rect.right = scale(rect.right);
 	rect.bottom = scale(rect.bottom);
 
-	if (!AdjustWindowRect(&rect, sWndStyle, FALSE))
-		err(1, "AdjustWindowRect() failed.");
+	AdjustWindowRect(&rect, sWndStyle, FALSE);
 
 	sWnd = CreateWindow(sClassName, sAppTitle, sWndStyle,
 	    CW_USEDEFAULT, CW_USEDEFAULT,
 	    rect.right - rect.left, rect.bottom - rect.top,
 	    NULL, NULL, instance, NULL);
 	if (!sWnd)
-		err(1, "CreateWindow failed");
+		err(IDS_ECREATEWND);
 
 	createControls();
 	loadPrefs();
