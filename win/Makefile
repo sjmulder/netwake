@@ -21,7 +21,7 @@ netwake.exe: winmain.o resource.o wol.o
 
 netwake.zip: netwake.exe README.md LICENSE.md
 	rm -f netwake.zip
-	zip -q netwake.zip $^
+	zip -qj netwake.zip $^
 
 netwake.fd: netwake.exe README.md LICENSE.md
 	dd if=/dev/zero of=netwake.fd.tmp bs=1440K count=1 status=none
