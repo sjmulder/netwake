@@ -101,22 +101,6 @@ createControls(void)
 	} 
 }
 
-static void
-resizeWindow(void)
-{
-	RECT rect, frame;
-	
-	rect = sWndSize;
-
-	if (!AdjustWindowRect(&rect, sWndStyle, FALSE))
-		err("AdjustWindowRect failed");
-	if (!GetWindowRect(sWnd, &frame))
-		err("GetWindowRect failed");
-	if (!MoveWindow(sWnd, frame.left, frame.top,
-	    rect.right - rect.left, rect.bottom - rect.top, TRUE))
-		err("MoveWindow failed");
-}
-
 static BOOL
 handleCommand(HWND sender)
 {
@@ -135,7 +119,6 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 	case WM_SYSCOLORCHANGE:
 	case CPAT_WM_THEMECHANGED:
 		applySystemFont();
-//		resizeWindow();
 		return 0;
 	case WM_COMMAND:
 		if (handleCommand((HWND)lparam))
