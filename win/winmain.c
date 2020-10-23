@@ -203,7 +203,7 @@ sendWol(void)
 
 	ZeroMemory(&wol, sizeof(wol));
 	for (i=0; i < (int)LEN(wol.zeroes); i++)
-		wol.zeroes[i] = 0xFF;
+		wol.zeroes[i] = (char)0xFF;
 	for (i=0; i < (int)LEN(wol.macs); i++)
 		wol.macs[i] = mac;
 
