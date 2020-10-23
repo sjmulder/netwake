@@ -3,4 +3,5 @@ Debug/
 Release/
 *.user
 *.o
+*.aps
 netwake.exe
