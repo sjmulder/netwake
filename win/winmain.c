@@ -32,7 +32,8 @@ static const char sBadMacText[] =
 
 static HINSTANCE sInstance;
 static HFONT sFont;
-static WORD sBaseDpi = 96, sDpi = 96, sFontSize;
+static WORD sBaseDpi = 96, sDpi = 96;
+static LONG sFontSize; /* system font, in pts */
 
 static HWND sWnd;
 static HWND sInfoFrame, sInfoLabel;
@@ -80,7 +81,12 @@ err(int code, const char *msg)
 static inline int
 scale(int magnitude)
 {
-	return MulDiv(magnitude, sFontSize, 8);
+	/*
+	 * 1. Convert from pt to px:                    72/sBaseDpi
+	 * 2. Apply display scale factor (96 as base):  sDpi/96
+	 * 3. Scale by font size (8 as base):           sFontSize/8
+	 */
+	return MulDiv(magnitude, 72 * sDpi * sFontSize, sBaseDpi * 96 * 8);
 }
 
 static void
@@ -118,11 +124,11 @@ loadFont(void)
 	if (!bret)
 		err(1, "SystemParametersInfo() failed.");
 
+	sFontSize = -metrics.lfMessageFont.lfHeight;
+
 	lfont = &metrics.lfMessageFont;
 	lfont->lfHeight = MulDiv(lfont->lfHeight, sDpi, sBaseDpi);
 	lfont->lfWidth = MulDiv(lfont->lfWidth, sDpi, sBaseDpi);
-
-	sFontSize = (WORD)MulDiv(-lfont->lfHeight, 72, 96);
 
 	if (sFont)
 		DeleteObject(sFont);
