@@ -14,6 +14,7 @@
 #define ID_SAVEBTN	102
 
 static UINT (*sGetDpiForSystem)(void);
+static UINT (*sInitCommonControls)(void);
 
 static const char sClassName[] = "Netwake";
 static const DWORD sWndStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU |
@@ -113,10 +114,16 @@ scale(int magnitude)
 static void
 loadFunctions(void)
 {
-	HMODULE user32;
+	HMODULE lib;
 
-	if ((user32 = LoadLibrary("user32.dll"))) {
-		sGetDpiForSystem = (void *)GetProcAddress(user32, "GetDpiForSystem");
+	if ((lib = LoadLibrary("user32.dll"))) {
+		sGetDpiForSystem = (void *)GetProcAddress(lib,
+		    "GetDpiForSystem");
+	}
+
+	if ((lib = LoadLibrary("comctl32.dll"))) {
+		sInitCommonControls = (void *)GetProcAddress(lib,
+		    "InitCommonControls");
 	}
 }
 
@@ -524,8 +531,9 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 
 	loadFunctions();
 	setupWinsock();
-	InitCommonControls();
 
+	if (sInitCommonControls)
+		sInitCommonControls();
 	if (sGetDpiForSystem)
 		sBaseDpi = sDpi = sGetDpiForSystem();
 
