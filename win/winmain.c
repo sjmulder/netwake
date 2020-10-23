@@ -8,6 +8,7 @@
 
 #define LEN(a) (sizeof(a)/sizeof(*(a)))
 
+/* not available on other SDKs */
 #define CPAT_WM_THEMECHANGED	0x031A
 #define CPAT_WM_DPICHANGED	0x02E0
 
