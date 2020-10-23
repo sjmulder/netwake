@@ -13,6 +13,8 @@
 typedef struct MacAddr {char bytes[6];} tMacAddr;
 typedef struct WolPacket {char zeroes[6]; tMacAddr macs[16];} tWolPacket;
 
+static UINT (*sGetDpiForSystem)(void);
+
 static const char sClassName[] = "Netwake";
 static const DWORD sWndStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU |
     WS_MINIMIZEBOX;
@@ -67,6 +69,16 @@ err(const char *msg)
 {
 	MessageBox(sWnd, msg, "Netwake", MB_OK | MB_ICONEXCLAMATION);
 	ExitProcess(1);
+}
+
+static void
+loadFunctions(void)
+{
+	HMODULE user32;
+
+	if (!(user32 = LoadLibrary("user32.dll")))
+		err("LoadLibrary(user32.dl) failed");
+	sGetDpiForSystem = (void *)GetProcAddress(user32, "GetDpiForSystem");
 }
 
 static void
@@ -266,6 +278,7 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 	
 	sInstance = instance;
 
+	loadFunctions();
 	setupWinsock();
 	InitCommonControls();
 
@@ -278,7 +291,8 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 	if (!RegisterClass(&wc))
 		err("RegisterClass failed");
 
-	sBaseDpi = sDpi = GetDpiForSystem();
+	if (sGetDpiForSystem)
+		sBaseDpi = sDpi = sGetDpiForSystem();
 
 	rect = sWndSize;
 	rect.right  = MulDiv(rect.right, sDpi, 96);
