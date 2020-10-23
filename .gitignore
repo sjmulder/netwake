@@ -2,6 +2,8 @@
 Debug/
 Release/
 *.user
-*.o
 *.aps
+*.ncb
+*.opt
+*.plg
 netwake.exe
