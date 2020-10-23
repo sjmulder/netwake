@@ -21,6 +21,9 @@ static const DWORD sWndStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU |
     WS_MINIMIZEBOX;
 static const RECT sWndSize = {0, 0, 456, 272};
 
+static const char sNoResMsg[] =
+"An error occured, but the description is unavailable:";
+
 static HINSTANCE sInstance;
 static HFONT sFont;
 static WORD sBaseDpi = 96, sDpi = 96;
@@ -70,10 +73,22 @@ static void
 warn(int msgRes)
 {
 	char msg[1024];
+	DWORD err;
+	size_t len=0, i;
 
 	if (!LoadString(sInstance, msgRes, msg, sizeof(msg))) {
-		MessageBox(sWnd,  "An error occured, but the description is "
-		    "unavailable.", sAppTitle, MB_OK | MB_ICONEXCLAMATION);
+		err = GetLastError();
+
+		for (i=0; sNoResMsg[i] && len < sizeof(msg)-1; i++)
+			msg[len++] = sNoResMsg[i];
+		for (i=0; i < 4 && len < sizeof(msg)-1; i++)
+			msg[len++] = "\r\n\r\n"[i];
+		msg[len] = '\0';
+
+		FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, err, 0,
+		    &msg[len], sizeof(msg) - len, NULL);
+
+		MessageBox(sWnd, msg, sAppTitle, MB_OK | MB_ICONEXCLAMATION);
 		return;
 	}
 
