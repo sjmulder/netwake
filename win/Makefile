@@ -21,7 +21,8 @@ netwake.exe: winmain.o resource.o wol.o util.o
 resource.o: resource.rc
 	$(RES) $(RESFLAGS) $< $@
 
-winmain.o:	wol.h util.h
+winmain.o:	wol.h util.h resource.h
 wol.o:		wol.h util.h
+resource.o:	resource.h
 
 .PHONY: all clean
