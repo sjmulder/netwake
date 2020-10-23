@@ -1,10 +1,17 @@
+#define WIN32_LEAN_AND_MEAN
+
 #include <windows.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #include <commctrl.h>
 
 #define CPAT_WM_THEMECHANGED	0x031A
 #define CPAT_WM_DPICHANGED	0x02E0
 
 #define LEN(a) (sizeof(a)/sizeof(*(a)))
+
+typedef struct MacAddr {char bytes[6];} tMacAddr;
+typedef struct WolPacket {char zeroes[6]; tMacAddr macs[16];} tWolPacket;
 
 static const char sClassName[] = "Netwake";
 static const DWORD sWndStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU |
@@ -60,6 +67,15 @@ err(const char *msg)
 {
 	MessageBox(sWnd, msg, "Netwake", MB_OK | MB_ICONEXCLAMATION);
 	ExitProcess(1);
+}
+
+static void
+setupWinsock(void)
+{
+	WSADATA data;
+
+	if (WSAStartup(MAKEWORD(2, 0), &data))
+		err("WSAStartup failed");
 }
 
 static void
@@ -124,6 +140,83 @@ relayout(void)
 		    MulDiv(sCtrlDefs[i].h, sDpi, 96), TRUE);
 }
 
+static int
+parseMac(const char *str, tMacAddr *mac)
+{
+	int inPos, outPos=0;
+	char c;
+
+	ZeroMemory(mac, sizeof(*mac));
+
+	for (inPos=0; str[inPos]; inPos++) {
+		if (outPos >= LEN(mac->bytes)*2)
+			return -1;
+		else if ((c = str[inPos]) == ':')
+			continue;
+		else if (c >= '0' && c <= '9') c -= '0';
+		else if (c >= 'a' && c <= 'f') c-= 'a'-10;
+		else if (c >= 'A' && c <= 'F') c-= 'A'-10;
+		else
+			return -1;
+
+		mac->bytes[outPos/2] |= c << (!(outPos & 1) * 4);
+		outPos++;
+	}
+
+	if (outPos < LEN(mac->bytes)*2)
+		return -1;
+
+	return 0;
+}
+
+static void
+sendWol(void)
+{
+	char buf[256];
+	tMacAddr mac;
+	int sock, i;
+	tWolPacket wol;
+	struct addrinfo hints, *addr;
+
+	GetWindowText(sMacField, buf, sizeof(buf));
+
+	if (parseMac(buf, &mac) == -1) {
+		MessageBox(sWnd, "Invalid MAC address.\r\n\r\n"
+		    "The address should consist of 8 pairs of hexadecimal "
+		    "digits (0-A), optionally separated by colons.\r\n\r\n"
+		    "Example: d2:32:e4:87:85:24", "Netwake",
+		    MB_ICONEXCLAMATION | MB_OK);
+		return;
+	}
+
+	ZeroMemory(&wol, sizeof(wol));
+	for (i=0; i < (int)LEN(wol.zeroes); i++)
+		wol.zeroes[i] = 0xFF;
+	for (i=0; i < (int)LEN(wol.macs); i++)
+		wol.macs[i] = mac;
+
+	ZeroMemory(&hints, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_protocol = IPPROTO_UDP;
+
+	if (getaddrinfo("255.255.255.255", "9", &hints, &addr))
+		err("getaddrinfo() failed");
+	if ((sock = socket(addr->ai_family, addr->ai_socktype,
+	    addr->ai_protocol)) == INVALID_SOCKET)
+		err("socket() failed");
+	if (connect(sock, addr->ai_addr, addr->ai_addrlen) == SOCKET_ERROR)
+		err("connect() failed");
+	if (send(sock, (void *)&wol, sizeof(wol), 0) == SOCKET_ERROR)
+		err("send() failed");
+
+	closesocket(sock);
+	freeaddrinfo(addr);
+
+	MessageBox(sWnd, "Wake-On-Lan packet sent!", "Netwake",
+	    MB_ICONINFORMATION | MB_OK);
+}
+
 static LRESULT CALLBACK
 wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
@@ -147,6 +240,8 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 	case WM_COMMAND:
 		if ((HWND)lparam == sQuitBtn)
 			DestroyWindow(sWnd);
+		else if ((HWND)lparam == sWakeBtn)
+			sendWol();
 		else
 			break;
 		return 0;
@@ -171,6 +266,7 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 	
 	sInstance = instance;
 
+	setupWinsock();
 	InitCommonControls();
 
 	ZeroMemory(&wc, sizeof(wc));
@@ -211,6 +307,7 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 	}
 
 	DeleteObject(sFont);
+	WSACleanup();
 
 	if (ret == -1)
 		return ret;
