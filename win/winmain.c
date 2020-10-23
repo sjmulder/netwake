@@ -101,17 +101,6 @@ createControls(void)
 	} 
 }
 
-static BOOL
-handleCommand(HWND sender)
-{
-	if (sender == sQuitBtn)
-		DestroyWindow(sWnd);
-	else
-		return FALSE;
-
-	return TRUE;
-}
-
 static LRESULT CALLBACK
 wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
@@ -121,9 +110,11 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		applySystemFont();
 		return 0;
 	case WM_COMMAND:
-		if (handleCommand((HWND)lparam))
-			return 0;
-		break;
+		if ((HWND)lparam == sQuitBtn)
+			DestroyWindow(sWnd);
+		else
+			break;
+		return 0;
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		return 0;
