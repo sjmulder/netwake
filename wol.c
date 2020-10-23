@@ -18,7 +18,7 @@ ParseMacAddr(const char *str, tMacAddr *mac)
 	for (inPos=0; str[inPos]; inPos++) {
 		if (outPos >= (int)LEN(mac->bytes)*2)
 			return -1;
-		else if ((c = str[inPos]) == ':')
+		else if ((c = str[inPos]) == ':' || c == ' ')
 			continue;
 		else if (c >= '0' && c <= '9') c -= '0';
 		else if (c >= 'a' && c <= 'f') c-= 'a'-10;
