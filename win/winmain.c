@@ -60,8 +60,9 @@ static const struct {
 	    WS_EX_CLIENTEDGE},
 	{&sFavLabel, 168, 98, 96, 17, "STATIC", "&Favourites:", 0, 0},
 	{&sFavList, 264, 96, 184, 140, "LISTBOX", NULL,
-	    WS_TABSTOP | WS_VSCROLL | LBS_SORT | LBS_NOTIFY |
-	    LBS_NOINTEGRALHEIGHT, WS_EX_CLIENTEDGE},
+	    WS_TABSTOP | WS_VSCROLL |  LBS_SORT | LBS_NOTIFY |
+	    LBS_WANTKEYBOARDINPUT | LBS_NOINTEGRALHEIGHT,
+	    WS_EX_CLIENTEDGE},
 	{&sQuitBtn, 8, 240, 75, 23, "BUTTON", "&Quit", WS_TABSTOP, 0},
 	{&sDelBtn, 293, 240, 75, 23, "BUTTON", "&Delete",
 	    WS_TABSTOP | WS_DISABLED, 0},
@@ -384,6 +385,12 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		else
 			break;
 		return 0;
+	case WM_VKEYTOITEM:
+		if ((HWND)lparam == sFavList && LOWORD(wparam) == VK_DELETE) {
+			deleteFav();
+			return 2;
+		}
+		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		return 0;
