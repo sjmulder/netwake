@@ -235,7 +235,8 @@ saveFav(void)
 	if (ls != ERROR_SUCCESS)
 		err(1, "RegCreateKeyExA() failed");
 
-	ls = RegSetValueEx(key, name, 0, REG_SZ, macStr, strlen(macStr)+1);
+	ls = RegSetValueEx(key, name, 0, REG_SZ, (BYTE *)macStr,
+	    strlen(macStr)+1);
 	if (ls != ERROR_SUCCESS)
 		err(1, "RegSetValueEx() failed");
 
@@ -260,7 +261,7 @@ loadFav(void)
 	}
 
 	len = SendMessage(sFavList, LB_GETTEXTLEN, idx, 0);
-	if (!len || len >= sizeof(name))
+	if (!len || len >= (LRESULT)sizeof(name))
 		err(1, "Invalid name.");
 	if (SendMessage(sFavList, LB_GETTEXT, idx, (LPARAM)name) == LB_ERR)
 		err(1, "LB_GETTEXT failed.");
@@ -299,7 +300,7 @@ deleteFav()
 	}
 
 	len = SendMessage(sFavList, LB_GETTEXTLEN, idx, 0);
-	if (!len || len >= sizeof(name))
+	if (!len || len >= (LRESULT)sizeof(name))
 		err(1, "Invalid name.");
 	if (SendMessage(sFavList, LB_GETTEXT, idx, (LPARAM)name) == LB_ERR)
 		err(1, "LB_GETTEXT failed.");
