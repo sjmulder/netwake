@@ -5,6 +5,7 @@
 #include <commctrl.h>
 #include "../wol.h"
 #include "resource.h"
+#include "prefs.h"
 
 #define LEN(a) (sizeof(a)/sizeof(*(a)))
 
@@ -20,9 +21,6 @@ static UINT (*sGetDpiForSystem)(void);
 static UINT (*sInitCommonControls)(void);
 
 static const char sClassName[] = "Netwake";
-static const char sIniName[] = "netwake.ini";
-static const char sRegRoot[] = "Software\\Netwake";
-static const char sRegFavs[] = "Software\\Netwake\\Favourites";
 
 static const DWORD sWndStyle = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU |
     WS_MINIMIZEBOX;
@@ -339,135 +337,6 @@ relayoutControls(void)
 }
 
 static void
-loadPrefsIni(void)
-{
-	char buf[1024], *name;
-
-	buf[0] = '\0';
-	GetPrivateProfileString("Main", "LastAddress", NULL, buf, sizeof(buf),
-	    sIniName);
-	SetWindowText(sMacField, buf);
-	SendMessage(sMacField, EM_SETSEL, (WPARAM)0, (LPARAM)-1);
-
-	buf[0] = '\0';
-	buf[1] = '\0';
-	GetPrivateProfileString("Favourites", NULL, NULL, buf, sizeof(buf),
-	    sIniName);
-
-	for (name = buf; *name; name += strlen(name)+1)
-		SendMessage(sFavList, LB_ADDSTRING, 0, (LPARAM)name);
-}
-
-static void
-loadPrefsReg(void)
-{
-	HKEY key;
-	char buf[256];
-	DWORD sz, type, i;
-	LONG lret;
-
-	lret = RegOpenKeyEx(HKEY_CURRENT_USER, sRegRoot, 0, KEY_READ, &key);
-	if (lret != ERROR_SUCCESS)
-		return;
-
-	sz = (DWORD)sizeof(buf);
-	lret = RegQueryValueEx(key, "LastAddress", NULL, &type, (BYTE *)buf,
-	    &sz);
-	if (lret == ERROR_SUCCESS && type == REG_SZ) {
-		SetWindowText(sMacField, buf);
-		SendMessage(sMacField, EM_SETSEL, (WPARAM)0, (LPARAM)-1);
-	}
-
-	RegCloseKey(key);
-
-	lret = RegOpenKeyEx(HKEY_CURRENT_USER, sRegFavs, 0, KEY_READ, &key);
-	if (lret != ERROR_SUCCESS)
-		return;
-
-	for (i=0; ; i++) {
-		sz = (DWORD)sizeof(buf);
-		lret = RegEnumValue(key, i, buf, &sz, NULL, NULL, NULL, NULL);
-		if (lret == ERROR_SUCCESS)
-			SendMessage(sFavList, LB_ADDSTRING, 0, (LPARAM)buf);
-		else if (lret == ERROR_NO_MORE_ITEMS)
-			break;
-		else {
-			warnWin(IDS_EREGREAD);
-			break;
-		}
-	}
-
-	RegCloseKey(key);
-}
-
-static void
-loadPrefs(void)
-{
-	if (sIs95Up)
-		loadPrefsReg();
-	else
-		loadPrefsIni();
-}
-
-static void
-saveLastMac(const char *val)
-{
-	LONG lret;
-	HKEY key;
-
-	if (sIs95Up) {
-		lret = RegCreateKeyExA(HKEY_CURRENT_USER, sRegRoot, 0, NULL,
-		    REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, NULL);
-		if (lret != ERROR_SUCCESS)
-			return;
-
-		RegSetValueEx(key, "LastAddress", 0, REG_SZ, (BYTE *)val,
-		    strlen(val)+1);
-		RegCloseKey(key);
-	} else
-		WritePrivateProfileString("Main", "LastAddress", val, sIniName);
-}
-
-static int
-saveFavReg(const char *name, const char *val)
-{
-	LONG lret;
-	HKEY key;
-
-	lret = RegCreateKeyExA(HKEY_CURRENT_USER, sRegFavs, 0, NULL,
-	    REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &key, NULL);
-	if (lret != ERROR_SUCCESS) {
-		warnWin(IDS_EREGWRITE);
-		RegCloseKey(key);
-		return -1;
-	}
-
-	lret = RegSetValueEx(key, name, 0, REG_SZ, (BYTE *)val, strlen(val)+1);
-	if (lret != ERROR_SUCCESS) {
-		warnWin(IDS_EREGWRITE);
-		RegCloseKey(key);
-		return -1;
-	}
-
-	RegCloseKey(key);
-	return 0;
-}
-
-static int
-saveFavIni(const char *name, const char *val)
-{
-	BOOL bret;
-
-	bret = WritePrivateProfileString("Favourites", name, val, sIniName);
-	if (!bret) {
-		warnWin(IDS_EINIWRITE);
-		return -1;
-	}
-
-	return 0;
-}
-
-static void
 saveFav(void)
 {
 	char macStr[256], name[256];
@@ -489,53 +358,13 @@ saveFav(void)
 	FormatMacAddr(&mac, macStr);
 	SetWindowText(sMacField, macStr);
 
-	if (sIs95Up) {
-		if (saveFavReg(name, macStr) == -1)
-			return;
-	} else {
-		if (saveFavIni(name, macStr) == -1)
-			return;
+	if (!WriteFav(name, macStr)) {
+		warnWin(IDS_EPREFWRITE);
+		return;
 	}
 
 	if (SendMessage(sFavList, LB_FINDSTRING, 0, (LPARAM)name) == LB_ERR)
 		SendMessage(sFavList, LB_ADDSTRING, 0, (LPARAM)name);
-}
-
-static int
-loadFavReg(const char *name, char *val, size_t sz)
-{
-	LONG lret;
-	HKEY key;
-	DWORD sz2, type;
-
-	lret = RegOpenKeyEx(HKEY_CURRENT_USER, sRegFavs, 0, KEY_READ, &key);
-	if (lret != ERROR_SUCCESS)
-		return -1;
-
-	sz2 = sz;
-	lret = RegQueryValueEx(key, name, NULL, &type, (BYTE *)val, &sz2);
-	if (lret != ERROR_SUCCESS || type != REG_SZ) {
-		warnWin(IDS_EREGREAD);
-		RegCloseKey(key);
-		return -1;
-	}
-
-	RegCloseKey(key);
-	return 0;
-}
-
-static int
-loadFavIni(const char *name, char *val, size_t sz)
-{
-	val[0] = '\0';
-
-	GetPrivateProfileString("Favourites", name, NULL, val, sz, sIniName);
-	if (!val[0]) {
-		warn(IDS_EINIREAD);
-		return -1;
-	}
-
-	return 0;
 }
 
 static int
@@ -558,52 +387,14 @@ loadFav(void)
 		return -1;
 	}
 
-	name[len] = '\0';
-
-	if (sIs95Up) {
-		if (loadFavReg(name, macStr, sizeof(macStr)) == -1)
-			return -1;
-	} else {
-		if (loadFavIni(name, macStr, sizeof(macStr)) == -1)
-			return -1;
+	if (!ReadFav(name, macStr, sizeof(macStr))) {
+		warn(IDS_EPREFREAD);
+		return -1;
 	}
 
 	SetWindowText(sMacField, macStr);
 	SetWindowText(sNameField, name);
 	EnableWindow(sDelBtn, TRUE);
-
-	return 0;
-}
-
-static int
-deleteFavReg(const char *name)
-{
-	LONG lret;
-	HKEY key;
-
-	lret = RegOpenKeyEx(HKEY_CURRENT_USER, sRegFavs, 0, KEY_SET_VALUE,
-	    &key);
-	if (lret != ERROR_SUCCESS ||
-	    RegDeleteValue(key, name) != ERROR_SUCCESS) {
-		warnWin(IDS_EREGWRITE);
-		RegCloseKey(key);
-		return -1;
-	}
-
-	RegCloseKey(key);
-	return 0;
-}
-
-static int
-deleteFavIni(const char *name)
-{
-	BOOL bret;
-
-	bret = WritePrivateProfileString("Favourites", name, NULL, sIniName);
-	if (!bret) {
-		warnWin(IDS_EINIWRITE);
-		return -1;
-	}
 
 	return 0;
 }
@@ -630,14 +421,9 @@ deleteFav()
 		return;
 	}
 
-	name[len] = '\0';
-
-	if (sIs95Up) {
-		if (deleteFavReg(name) == -1)
-			return;
-	} else {
-		if (deleteFavIni(name) == -1)
-			return;
+	if (!DeleteFav(name)) {
+		warn(IDS_EPREFWRITE);
+		return;
 	}
 
 	SendMessage(sFavList, LB_DELETESTRING, idx, 0);
@@ -666,7 +452,9 @@ sendWol(void)
 	}
 
 	info(IDS_WOLSENT);
-	saveLastMac(buf);
+
+	if (!WriteLastMac(buf))
+		warn(IDS_EPREFWRITE);
 }
 
 static void
@@ -729,7 +517,7 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		/*
 		 * Here we get a new suggested window rect so no need to
 		 * (possibly mis-)calculate one, but still need to relayout and
-		 * reload fonts.
+ 		 * reload fonts.
 		 */
 		sDpi = HIWORD(wparam);
 		rectp = (RECT *)lparam;
@@ -746,7 +534,7 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		/*
 		 * Called by buttons and updateDefBtn() to learn what the
 		 * default button ought to be.
-		 */
+ 		 */
 		focus = GetFocus();
 		if (focus == sMacField || focus == sFavList)
 			return MAKELRESULT(ID_WAKEBTN, DC_HASDEFID);
@@ -807,6 +595,12 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 	return DefWindowProc(wnd, msg, wparam, lparam);
 }
 
+static void
+favNameCallback(const char *name)
+{
+	SendMessage(sFavList, LB_ADDSTRING, 0, (LPARAM)name);
+}
+
 int WINAPI
 WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 {
@@ -816,6 +610,7 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 	MSG msg;
 	BOOL ret;
 	WSADATA data;
+	char buf[256];
 
 	(void)prev;
 	(void)cmd;
@@ -823,6 +618,7 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 	sInstance = instance;
 
 	loadFunctions(); /* also sets sIs95Up */
+	InitPrefs(sIs95Up);
 
 	if (WSAStartup(MAKEWORD(1, 1), &data))
 		err(IDS_ESOCKSETUP);
@@ -863,7 +659,14 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 		errWin(IDS_ECREATEWND);
 
 	createControls();
-	loadPrefs();
+
+	if (ReadLastMac(buf, sizeof(buf))) {
+		SetWindowText(sMacField, buf);
+		SendMessage(sMacField, EM_SETSEL, (WPARAM)0, (LPARAM)-1);
+	}
+	
+	ReadFavNames(favNameCallback);
+
 	SetFocus(sMacField);
 	ShowWindow(sWnd, showCmd);
 

@@ -16,7 +16,7 @@ dist: netwake.zip netwake.fd
 clean:
 	rm -f netwake.exe netwake.zip netwake.fd *.o *.tmp
 
-netwake.exe: winmain.o resource.o wol.o
+netwake.exe: winmain.o resource.o prefs.o wol.o
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 netwake.zip: netwake.exe README.md LICENSE.md
@@ -32,8 +32,9 @@ netwake.fd: netwake.exe README.md LICENSE.md
 resource.o: resource.rc
 	$(RES) $(RESFLAGS) $< $@
 
-winmain.o:	wol.h resource.h
-wol.o:		wol.h
+winmain.o:	wol.h resource.h prefs.h
 resource.o:	resource.h
+prefs.o:	prefs.h
+wol.o:		wol.h
 
 .PHONY: all dist clean
