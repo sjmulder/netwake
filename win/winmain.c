@@ -234,23 +234,16 @@ saveFav(void)
 	GetWindowText(sMacField, macStr, sizeof(macStr));
 	GetWindowText(sNameField, name, sizeof(name));
 
-	if (!strlen(macStr) || !strlen(name)) {
-		Warn(IDS_REQNAMEMAC);
-		return;
-	}
-
-	if (ParseMacAddr(macStr, &mac) == -1) {
-		Warn(IDS_BADMAC);
-		return;
-	}
+	if (!strlen(macStr) || !strlen(name))
+		{Warn(IDS_REQNAMEMAC); return;}
+	if (ParseMacAddr(macStr, &mac) == -1)
+		{Warn(IDS_BADMAC); return;}
 
 	FormatMacAddr(&mac, macStr);
 	SetWindowText(sMacField, macStr);
 
-	if (!WriteFav(name, macStr)) {
-		WarnWin(IDS_EPREFWRITE);
-		return;
-	}
+	if (!WriteFav(name, macStr))
+		{WarnWin(IDS_EPREFWRITE); return;}
 
 	if (SendMessage(sFavList, LB_FINDSTRING, 0, (LPARAM)name) == LB_ERR)
 		SendMessage(sFavList, LB_ADDSTRING, 0, (LPARAM)name);
@@ -266,20 +259,12 @@ loadFav(void)
 		return -1;
 
 	len = SendMessage(sFavList, LB_GETTEXTLEN, idx, 0);
-	if (!len || len >= (LRESULT)sizeof(name)) {
-		Warn(IDS_ENAMEREAD);
-		return -1;
-	}
-
-	if (SendMessage(sFavList, LB_GETTEXT, idx, (LPARAM)name) == LB_ERR) {
-		WarnWin(IDS_ENAMEREAD);
-		return -1;
-	}
-
-	if (!ReadFav(name, macStr, sizeof(macStr))) {
-		Warn(IDS_EPREFREAD);
-		return -1;
-	}
+	if (!len || len >= (LRESULT)sizeof(name))
+		{Warn(IDS_ENAMEREAD); return -1;}
+	if (SendMessage(sFavList, LB_GETTEXT, idx, (LPARAM)name) == LB_ERR)
+		{WarnWin(IDS_ENAMEREAD); return -1;}
+	if (!ReadFav(name, macStr, sizeof(macStr)))
+		{Warn(IDS_EPREFREAD); return -1;}
 
 	SetWindowText(sMacField, macStr);
 	SetWindowText(sNameField, name);
@@ -300,20 +285,13 @@ deleteFav()
 	}
 
 	len = SendMessage(sFavList, LB_GETTEXTLEN, idx, 0);
-	if (!len || len >= (LRESULT)sizeof(name)) {
-		Warn(IDS_ENAMEREAD);
-		return;
-	}
+	if (!len || len >= (LRESULT)sizeof(name))
+		{Warn(IDS_ENAMEREAD); return;}
 
-	if (SendMessage(sFavList, LB_GETTEXT, idx, (LPARAM)name) == LB_ERR) {
-		WarnWin(IDS_ENAMEREAD);
-		return;
-	}
-
-	if (!DeleteFav(name)) {
-		Warn(IDS_EPREFWRITE);
-		return;
-	}
+	if (SendMessage(sFavList, LB_GETTEXT, idx, (LPARAM)name) == LB_ERR)
+		{WarnWin(IDS_ENAMEREAD); return;}
+	if (!DeleteFav(name))
+		{Warn(IDS_EPREFWRITE); return;}
 
 	SendMessage(sFavList, LB_DELETESTRING, idx, 0);
 	EnableWindow(sDelBtn, FALSE);
@@ -327,23 +305,19 @@ sendWol(void)
 
 	GetWindowText(sMacField, buf, sizeof(buf));
 
-	if (ParseMacAddr(buf, &mac) == -1) {
-		Warn(IDS_BADMAC);
-		return;
-	}
+	if (ParseMacAddr(buf, &mac) == -1)
+		{Warn(IDS_BADMAC); return;}
 
 	FormatMacAddr(&mac, buf);
 	SetWindowText(sMacField, buf);
 
-	if (SendWolPacket(&mac) == -1) {
-		Warn(IDS_ESOCKERR);
-		return;
-	}
+	if (SendWolPacket(&mac) == -1)
+		{Warn(IDS_ESOCKERR); return;}
 
 	Info(IDS_WOLSENT);
 
 	if (!WriteLastMac(buf))
-		Warn(IDS_EPREFWRITE);
+		{Warn(IDS_EPREFWRITE); return;}
 }
 
 static void
