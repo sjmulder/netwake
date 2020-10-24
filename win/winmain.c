@@ -729,7 +729,7 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		/*
 		 * Here we get a new suggested window rect so no need to
 		 * (possibly mis-)calculate one, but still need to relayout and
-* 		 * reload fonts.
+		 * reload fonts.
 		 */
 		sDpi = HIWORD(wparam);
 		rectp = (RECT *)lparam;
@@ -746,7 +746,7 @@ wndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
 		/*
 		 * Called by buttons and updateDefBtn() to learn what the
 		 * default button ought to be.
-* 		 */
+		 */
 		focus = GetFocus();
 		if (focus == sMacField || focus == sFavList)
 			return MAKELRESULT(ID_WAKEBTN, DC_HASDEFID);
