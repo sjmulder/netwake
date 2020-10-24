@@ -8,6 +8,7 @@ Release/
 *.ncb
 *.opt
 *.plg
+netwake
 netwake.exe
 netwake.zip
 netwake.fd
