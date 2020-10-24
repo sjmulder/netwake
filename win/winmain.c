@@ -6,6 +6,7 @@
 #include "../wol.h"
 #include "resource.h"
 #include "prefs.h"
+#include "err.h"
 
 #define LEN(a) (sizeof(a)/sizeof(*(a)))
 
@@ -72,118 +73,6 @@ static const struct {
 	    WS_TABSTOP, 0}
 };
 
-static void
-strAppend(char *dst, size_t *len, size_t sz, char *src)
-{
-	size_t i;
-
-	for (i = 0; src[i] && *len < sz-1; i++)
-		dst[(*len)++] = src[i];
-	dst[*len] = '\0';
-}
-
-static void
-strAppendInt(char *dst, size_t *len, size_t sz, int num)
-{
-	char numStr[16];
-	size_t numLen=0, i;
-
-	for (; num && numLen < sizeof(numStr); num /= 10)
-		numStr[numLen++] = '0' + (num % 10);
-	for (i = numLen; i && *len < sz-1; i--)
-		dst[(*len)++] = numStr[i-1];
-}
-
-static void
-warn(int msgRes)
-{
-	char msg[1024];
-	DWORD err;
-	size_t len;
-
-	if (!LoadString(sInstance, msgRes, msg, sizeof(msg))) {
-		err = GetLastError();
-
-		strAppend(msg, &len, sizeof(msg), "An error occured, but the "
-		    "description no. ");
-		strAppendInt(msg, &len, sizeof(msg), msgRes);
-		strAppend(msg, &len, sizeof(msg), " could not be loaded:"
-		    "\r\n\r\n");
-
-		FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, err, 0,
-		    &msg[len], sizeof(msg) - len, NULL);
-
-		MessageBox(sWnd, msg, sAppTitle, MB_OK | MB_ICONEXCLAMATION);
-		return;
-	}
-
-	MessageBox(sWnd, msg, sAppTitle, MB_OK | MB_ICONEXCLAMATION);
-}
-
-static void
-warnWin(int prefixRes)
-{
-	char msg[1024];
-	DWORD err, err2;
-	size_t len;
-
-	err = GetLastError();
-
-	if (!(len = LoadString(sInstance, prefixRes, msg, sizeof(msg)))) {
-		err2 = GetLastError();
-
-		strAppend(msg, &len, sizeof(msg), "An error occured, but the "
-		    "description no. ");
-		strAppendInt(msg, &len, sizeof(msg), prefixRes);
-		strAppend(msg, &len, sizeof(msg), " could not be loaded:"
-		    "\r\n\r\n");
-
-		len += FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, err2, 0,
-		    &msg[len], sizeof(msg) - len, NULL);
-
-		strAppend(msg, &len, sizeof(msg), "\r\nThe original error was:"
-		    "\r\n\r\n");
-		FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, err, 0,
-		    &msg[len], sizeof(msg) - len, NULL);
-
-		MessageBox(sWnd, msg, sAppTitle, MB_OK | MB_ICONEXCLAMATION);
-		return;
-	}
-
-	strAppend(msg, &len, sizeof(msg), "\r\n\r\n");
-	FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, err, 0,
-	    &msg[len], sizeof(msg) - len, NULL);
-
-	MessageBox(sWnd, msg, sAppTitle, MB_OK | MB_ICONEXCLAMATION);
-}
-
-static void __declspec(noreturn)
-err(int msgRes)
-{
-	warn(msgRes);
-	ExitProcess(1);
-}
-
-static void __declspec(noreturn)
-errWin(int msgRes)
-{
-	warnWin(msgRes);
-	ExitProcess(1);
-}
-
-static void
-info(int msgRes)
-{
-	char msg[1024];
-
-	if (!LoadString(sInstance, msgRes, msg, sizeof(msg))) {
-		warnWin(IDS_ERESMISS);
-		return;
-	}
-
-	MessageBox(sWnd, msg, sAppTitle, MB_OK | MB_ICONINFORMATION);
-}
-
 static int
 scale(int magnitude)
 {
@@ -201,20 +90,20 @@ loadFunctions(void)
 	HMODULE lib;
 
 	if (!(lib = LoadLibrary("kernel32.dll")))
-		errWin(IDS_ELOADLIB);
+		ErrWin(IDS_ELOADLIB);
 
 	/*
 	 * GetVersion() is obsolete and will yield a compile error on modern
 	 * SDKs if invoked directly, but it's exactly what we need.
 	 */
 	if (!(sGetVersion = (void *)GetProcAddress(lib, "GetVersion")))
-		errWin(IDS_ELOADLIB);
+		ErrWin(IDS_ELOADLIB);
 
 	/* not pretty to set here but we need it immediately */
 	sIs95Up = LOBYTE(LOWORD(sGetVersion())) >= 4;
 
 	if (!(lib = LoadLibrary("user32.dll")))
-		errWin(IDS_ELOADLIB);
+		ErrWin(IDS_ELOADLIB);
 
 	/* optional, we'll assume 96 if unavailable */
 	sGetDpiForSystem = (void *)GetProcAddress(lib, "GetDpiForSystem");
@@ -222,7 +111,7 @@ loadFunctions(void)
 	if (sIs95Up) {
 		/* attempting this on Win 3.11 yields a message box */
 		if (!(lib = LoadLibrary("comctl32.dll")))
-			errWin(IDS_ELOADLIB);
+			ErrWin(IDS_ELOADLIB);
 
 		sInitCommonControls = (void *)GetProcAddress(lib,
 		    "InitCommonControls");
@@ -313,7 +202,7 @@ createControls(void)
 		    sCtrlDefs[i].exStyle, sCtrlDefs[i].className, str, style,
 		    x, y, w, h, sWnd, (HMENU)sCtrlDefs[i].id, sInstance, NULL);
 		if (!*sCtrlDefs[i].wnd)
-			errWin(IDS_ECREATEWND);
+			ErrWin(IDS_ECREATEWND);
 
 		if (sFont)
 			SendMessage(*sCtrlDefs[i].wnd, WM_SETFONT,
@@ -346,12 +235,12 @@ saveFav(void)
 	GetWindowText(sNameField, name, sizeof(name));
 
 	if (!strlen(macStr) || !strlen(name)) {
-		warn(IDS_REQNAMEMAC);
+		Warn(IDS_REQNAMEMAC);
 		return;
 	}
 
 	if (ParseMacAddr(macStr, &mac) == -1) {
-		warn(IDS_BADMAC);
+		Warn(IDS_BADMAC);
 		return;
 	}
 
@@ -359,7 +248,7 @@ saveFav(void)
 	SetWindowText(sMacField, macStr);
 
 	if (!WriteFav(name, macStr)) {
-		warnWin(IDS_EPREFWRITE);
+		WarnWin(IDS_EPREFWRITE);
 		return;
 	}
 
@@ -378,17 +267,17 @@ loadFav(void)
 
 	len = SendMessage(sFavList, LB_GETTEXTLEN, idx, 0);
 	if (!len || len >= (LRESULT)sizeof(name)) {
-		warn(IDS_ENAMEREAD);
+		Warn(IDS_ENAMEREAD);
 		return -1;
 	}
 
 	if (SendMessage(sFavList, LB_GETTEXT, idx, (LPARAM)name) == LB_ERR) {
-		warnWin(IDS_ENAMEREAD);
+		WarnWin(IDS_ENAMEREAD);
 		return -1;
 	}
 
 	if (!ReadFav(name, macStr, sizeof(macStr))) {
-		warn(IDS_EPREFREAD);
+		Warn(IDS_EPREFREAD);
 		return -1;
 	}
 
@@ -412,17 +301,17 @@ deleteFav()
 
 	len = SendMessage(sFavList, LB_GETTEXTLEN, idx, 0);
 	if (!len || len >= (LRESULT)sizeof(name)) {
-		warn(IDS_ENAMEREAD);
+		Warn(IDS_ENAMEREAD);
 		return;
 	}
 
 	if (SendMessage(sFavList, LB_GETTEXT, idx, (LPARAM)name) == LB_ERR) {
-		warnWin(IDS_ENAMEREAD);
+		WarnWin(IDS_ENAMEREAD);
 		return;
 	}
 
 	if (!DeleteFav(name)) {
-		warn(IDS_EPREFWRITE);
+		Warn(IDS_EPREFWRITE);
 		return;
 	}
 
@@ -439,7 +328,7 @@ sendWol(void)
 	GetWindowText(sMacField, buf, sizeof(buf));
 
 	if (ParseMacAddr(buf, &mac) == -1) {
-		warn(IDS_BADMAC);
+		Warn(IDS_BADMAC);
 		return;
 	}
 
@@ -447,14 +336,14 @@ sendWol(void)
 	SetWindowText(sMacField, buf);
 
 	if (SendWolPacket(&mac) == -1) {
-		warn(IDS_ESOCKERR);
+		Warn(IDS_ESOCKERR);
 		return;
 	}
 
-	info(IDS_WOLSENT);
+	Info(IDS_WOLSENT);
 
 	if (!WriteLastMac(buf))
-		warn(IDS_EPREFWRITE);
+		Warn(IDS_EPREFWRITE);
 }
 
 static void
@@ -617,11 +506,12 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 	
 	sInstance = instance;
 
+	InitErr(sInstance, sAppTitle, &sWnd);
 	loadFunctions(); /* also sets sIs95Up */
 	InitPrefs(sIs95Up);
 
 	if (WSAStartup(MAKEWORD(1, 1), &data))
-		err(IDS_ESOCKSETUP);
+		Err(IDS_ESOCKSETUP);
 	if (sInitCommonControls)
 		sInitCommonControls();
 	if (sGetDpiForSystem)
@@ -631,10 +521,10 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 
 	accel = LoadAccelerators(sInstance, MAKEINTRESOURCE(IDA_ACCELS));
 	if (!accel)
-		errWin(IDS_ERESMISS);
+		ErrWin(IDS_ERESMISS);
 
 	if (!LoadString(sInstance, IDS_APPTITLE, sAppTitle, sizeof(sAppTitle)))
-		errWin(IDS_ERESMISS);
+		ErrWin(IDS_ERESMISS);
 
 	ZeroMemory(&wc, sizeof(wc));
 	wc.hInstance = instance;
@@ -643,7 +533,7 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 	wc.hbrBackground = (HBRUSH)(sIs95Up ? COLOR_BTNFACE+1 : COLOR_WINDOW+1);
 
 	if (!RegisterClass(&wc))
-		errWin(IDS_EREGCLASS);
+		ErrWin(IDS_EREGCLASS);
 
 	rect = sWndSize;
 	rect.right = scale(rect.right);
@@ -656,7 +546,7 @@ WinMain(HINSTANCE instance, HINSTANCE prev, LPSTR cmd, int showCmd)
 	    rect.right - rect.left, rect.bottom - rect.top,
 	    NULL, NULL, instance, NULL);
 	if (!sWnd)
-		errWin(IDS_ECREATEWND);
+		ErrWin(IDS_ECREATEWND);
 
 	createControls();
 
