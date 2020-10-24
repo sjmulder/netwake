@@ -1,7 +1,19 @@
+#include <stdint.h>
 #include "wol.h"
 
 #ifdef _WIN32
 # include <winsock.h>
+# define close(x)	closesocket(x)
+#else
+# include <string.h>
+# include <unistd.h>
+# include <sys/types.h>
+# include <sys/socket.h>
+# include <netinet/in.h>
+# include <netinet/udp.h>
+# define INVALID_SOCKET	-1
+# define SOCKET_ERROR	-1
+typedef int SOCKET;
 #endif
 
 #define LEN(a) (sizeof(a)/sizeof(*(a)))
@@ -14,7 +26,7 @@ ParseMacAddr(const char *str, tMacAddr *mac)
 	int inPos, outPos=0;
 	char c;
 
-	ZeroMemory(mac, sizeof(*mac));
+	memset(mac, 0, sizeof(*mac));
 
 	for (inPos=0; str[inPos]; inPos++) {
 		if (outPos >= (int)LEN(mac->bytes)*2)
@@ -68,7 +80,7 @@ SendWolPacket(const tMacAddr *mac)
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
 	addr.sin_port = 9;
-	addr.sin_addr.S_un.S_addr = 0xFFFFFFFF;
+	*(uint32_t *)&addr.sin_addr = 0xFFFFFFFF;
 
 	if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET)
 		return -1;
@@ -78,7 +90,7 @@ SendWolPacket(const tMacAddr *mac)
 	if (send(sock, (void *)&wol, sizeof(wol), 0) == SOCKET_ERROR)
 		return -1;
 
-	closesocket(sock);
+	close(sock);
 
 	return 0;
 }
