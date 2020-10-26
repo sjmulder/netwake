@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.30611.23
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "netwake-vc", "win\netwake-vc.vcxproj", "{C98F8B67-DB58-492A-AAD3-A6B5CEDC84F0}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "netwake-mingw", "win\netwake-mingw.vcxproj", "{083720C6-36F8-4706-B596-61283E75ED4C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,12 @@ Global
 		{C98F8B67-DB58-492A-AAD3-A6B5CEDC84F0}.Release|x64.Build.0 = Release|x64
 		{C98F8B67-DB58-492A-AAD3-A6B5CEDC84F0}.Release|x86.ActiveCfg = Release|Win32
 		{C98F8B67-DB58-492A-AAD3-A6B5CEDC84F0}.Release|x86.Build.0 = Release|Win32
+		{083720C6-36F8-4706-B596-61283E75ED4C}.Debug|x64.ActiveCfg = Release|Win32
+		{083720C6-36F8-4706-B596-61283E75ED4C}.Debug|x86.ActiveCfg = Release|Win32
+		{083720C6-36F8-4706-B596-61283E75ED4C}.Debug|x86.Build.0 = Release|Win32
+		{083720C6-36F8-4706-B596-61283E75ED4C}.Release|x64.ActiveCfg = Release|Win32
+		{083720C6-36F8-4706-B596-61283E75ED4C}.Release|x86.ActiveCfg = Release|Win32
+		{083720C6-36F8-4706-B596-61283E75ED4C}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

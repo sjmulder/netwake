@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <ProjectGuid>{083720C6-36F8-4706-B596-61283E75ED4C}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <NMakeUseOemCodePage>true</NMakeUseOemCodePage>
+    <MsysPath>C:\msys64\</MsysPath>
+    <MinGWPath>$(MsysPath)mingw32\</MinGWPath>
+    <MinGWToolchain>i686-w64-mingw32</MinGWToolchain>
+    <MakePath>$(MsysPath)usr\bin;$(MinGWPath)bin;$(MinGWPath)$(MinGWToolchain)\bin</MakePath>
+    <MakeFlags>RES=windres</MakeFlags>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <NMakeBuildCommandLine>
+      set PATH=$(MakePath);%PATH%;
+      make $(MakeFlags)
+    </NMakeBuildCommandLine>
+    <NMakeOutput>netwake.exe</NMakeOutput>
+    <NMakeCleanCommandLine>
+      set PATH=$(MakePath);%PATH%;
+      make $(MakeFlags) clean
+    </NMakeCleanCommandLine>
+    <NMakeReBuildCommandLine>
+      set PATH=$(MakePath);%PATH%;
+      make $(MakeFlags) clean
+      make $(MakeFlags)
+    </NMakeReBuildCommandLine>
+    <NMakePreprocessorDefinitions>NOSTDLIB;WIN32;NDEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\wol.c" />
+    <ClCompile Include="err.c" />
+    <ClCompile Include="prefs.c" />
+    <ClCompile Include="std.c" />
+    <ClCompile Include="winmain.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\wol.h" />
+    <ClInclude Include="err.h" />
+    <ClInclude Include="prefs.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
