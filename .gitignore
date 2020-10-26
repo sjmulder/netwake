@@ -1,6 +1,6 @@
 .vs/
-Debug/
-Release/
+bin/
+obj/
 *.o
 *.tmp
 *.user
