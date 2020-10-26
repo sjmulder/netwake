@@ -32,6 +32,9 @@
     <ClCompile Include="prefs.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="std.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="netwake.exe.manifest">

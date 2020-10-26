@@ -169,6 +169,7 @@
     <ClCompile Include="..\wol.c" />
     <ClCompile Include="err.c" />
     <ClCompile Include="prefs.c" />
+    <ClCompile Include="std.c" />
     <ClCompile Include="winmain.c" />
   </ItemGroup>
   <ItemGroup>

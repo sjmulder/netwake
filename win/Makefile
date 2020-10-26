@@ -16,7 +16,7 @@ dist: netwake.zip netwake.fd
 clean:
 	rm -f netwake.exe netwake.zip netwake.fd *.o *.tmp
 
-netwake.exe: winmain.o resource.o prefs.o err.o wol.o
+netwake.exe: winmain.o resource.o prefs.o err.o wol.o std.o
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 netwake.zip: netwake.exe README.md LICENSE.md
