@@ -1,4 +1,5 @@
 #define WIN32_LEAN_AND_MEAN
+#define PREFS_EXTERN
 
 #include <windows.h>
 #include "prefs.h"
