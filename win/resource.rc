@@ -129,7 +129,7 @@ Er is een fout opgetreden bij het versturen van het WOL-bericht."
 Er is een fout opgetreden bij het lezen uit het register of netwake.ini:"
 	IDS_EPREFWRITE	"\
 Er is een fout opgetreden bij het schrijven naar het register of netwake.ini:"
-	IDS_EPREFREAD	"De naam van de favoriet kon niet worden gelezen."
+	IDS_ENAMEREAD	"De naam van de favoriet kon niet worden gelezen."
 	IDS_ERESMISS	"Een resource kon niet worden gelezen:"
 	IDS_EREGCLASS	"De windowclass kon niet worden geregistreerd:"
 	IDS_ELOADLIB	"Een vereiste functie of DLL kon niet worden geladen:"
