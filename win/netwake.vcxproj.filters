@@ -26,6 +26,12 @@
     <ClCompile Include="..\wol.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="err.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="prefs.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="netwake.exe.manifest">
@@ -37,6 +43,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="err.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="prefs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

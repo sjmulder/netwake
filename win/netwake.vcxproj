@@ -158,10 +158,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\wol.c" />
+    <ClCompile Include="err.c" />
+    <ClCompile Include="prefs.c" />
     <ClCompile Include="winmain.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\wol.h" />
+    <ClInclude Include="err.h" />
+    <ClInclude Include="prefs.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
