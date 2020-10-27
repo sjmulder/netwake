@@ -15,17 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="resource.rc">
-      <Filter>Resource Files</Filter>
-    </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="winmain.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\wol.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="err.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -35,23 +24,24 @@
     <ClCompile Include="std.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="winmain.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\wol.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Manifest Include="netwake.exe.manifest">
-      <Filter>Resource Files</Filter>
-    </Manifest>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\wol.h">
+    <ClInclude Include="err.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="prefs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="err.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="prefs.h">
+    <ClInclude Include="..\..\common\wol.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

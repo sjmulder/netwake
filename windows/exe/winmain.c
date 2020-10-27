@@ -3,7 +3,7 @@
 #include <windows.h>
 #include <winsock.h>
 #include <commctrl.h>
-#include "../wol.h"
+#include "../../common/wol.h"
 #include "resource.h"
 #include "prefs.h"
 #include "err.h"

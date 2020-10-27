@@ -3,9 +3,9 @@ clean: win-clean unix-clean
 dist:  win-dist  unix-all
 .PHONY: all clean dist
 
-win-all:   ; $(MAKE) -C win all
-win-clean: ; $(MAKE) -C win clean
-win-dist:  ; $(MAKE) -C win dist
+win-all:   ; $(MAKE) -C windows/exe all
+win-clean: ; $(MAKE) -C windows/exe clean
+win-dist:  ; $(MAKE) -C windows/exe dist
 .PHONY: win-all win-clean win-dist
 
 unix-all:   ; $(MAKE) -C unix all
