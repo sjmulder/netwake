@@ -48,6 +48,8 @@
       make $(MakeFlags)
     </NMakeReBuildCommandLine>
     <NMakePreprocessorDefinitions>NOSTDLIB;WIN32;NDEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <OutDir>$(ProjectDir)</OutDir>
+    <IntDir>$(ProjectDir)obj\$(Platform) $(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup>
   </ItemDefinitionGroup>
