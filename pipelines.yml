@@ -1,0 +1,67 @@
+jobs:
+
+- job: linux_mingw
+  displayName: Linux MinGW
+  pool:
+    vmImage: ubuntu-20.04
+  steps:
+  - script: sudo apt install -y mingw-w64 mtools
+    displayName: Dependencies
+  - script: make dist
+    displayName: Build
+    workingDirectory: win32
+  - task: CopyFiles@2
+    displayName: Copy
+    inputs:
+      contents: |
+        win32/netwake.zip
+        win32/netwake.fd
+      targetFolder: $(Build.ArtifactStagingDirectory)
+  - task: PublishBuildArtifacts@1
+    displayName: Publish
+    inputs:
+      artifactName: mingw
+
+- job: linux_cli
+  displayName: Linux CLI
+  pool:
+    vmImage: ubuntu-20.04
+  steps:
+  - script: make
+    displayName: Build
+    workingDirectory: cli
+  - script: ./netwake 12:34:56:67:9a:bc
+    displayName: Test
+    workingDirectory: cli
+
+- job: macos_cli
+  displayName: macOS CLI
+  pool:
+    vmImage: macos-10.15
+  steps:
+  - script: make
+    displayName: Build
+    workingDirectory: cli
+  - script: ./netwake 12:34:56:67:9a:bc
+    displayName: Test
+    workingDirectory: cli
+
+- job: windows_vs
+  displayName: Visual Studio
+  pool:
+    vmImage: windows-2019
+  steps:
+  - task: VSBuild@1
+    displayName: Build
+    inputs:
+      platform: x86
+      configuration: Release
+
+- job: windows_vc6
+  displayName: Visual C++ 6
+  pool:
+    name: default
+    demands: vc6
+  steps:
+  - script: msdev netwake.dsw /make all release
+    displayName: Build
