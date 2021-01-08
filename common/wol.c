@@ -18,20 +18,20 @@ typedef int SOCKET;
 
 #define LEN(a) (sizeof(a)/sizeof(*(a)))
 
-typedef struct WolPacket {char zeroes[6]; tMacAddr macs[16];} tWolPacket;
+struct wol_pkt { char zeroes[6]; struct mac_addr macs[16]; };
 
 int
-ParseMacAddr(const char *str, tMacAddr *mac)
+mac_parse(const char *str, struct mac_addr *mac)
 {
-	int inPos, outPos=0;
+	int iin, iout=0;
 	char c;
 
 	memset(mac, 0, sizeof(*mac));
 
-	for (inPos=0; str[inPos]; inPos++) {
-		if (outPos >= (int)LEN(mac->bytes)*2)
+	for (iin=0; str[iin]; iin++) {
+		if (iout >= (int)LEN(mac->bytes)*2)
 			return -1;
-		else if ((c = str[inPos]) == ':' || c == ' ')
+		else if ((c = str[iin]) == ':' || c == ' ')
 			continue;
 		else if (c >= '0' && c <= '9') c -= '0';
 		else if (c >= 'a' && c <= 'f') c-= 'a'-10;
@@ -39,18 +39,18 @@ ParseMacAddr(const char *str, tMacAddr *mac)
 		else
 			return -1;
 
-		mac->bytes[outPos/2] |= c << (!(outPos & 1) * 4);
-		outPos++;
+		mac->bytes[iout/2] |= c << (!(iout & 1) * 4);
+		iout++;
 	}
 
-	if (outPos < (int)LEN(mac->bytes)*2)
+	if (iout < (int)LEN(mac->bytes)*2)
 		return -1;
 
 	return 0;
 }
 
 void
-FormatMacAddr(const tMacAddr *mac, char *str)
+mac_fmt(const struct mac_addr *mac, char *str)
 {
 	int i;
 
@@ -64,10 +64,10 @@ FormatMacAddr(const tMacAddr *mac, char *str)
 }
 
 int
-SendWolPacket(const tMacAddr *mac)
+wol_send(const struct mac_addr *mac)
 {
 	int i;
-	tWolPacket wol;
+	struct wol_pkt wol;
 	struct sockaddr_in addr;
 	SOCKET sock;
 

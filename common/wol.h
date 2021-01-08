@@ -1,5 +1,5 @@
-typedef struct MacAddr {char bytes[6];} tMacAddr;
+struct mac_addr { char bytes[6]; };
 
-int ParseMacAddr(const char *str, tMacAddr *mac);
-void FormatMacAddr(const tMacAddr *mac, char *str);
-int SendWolPacket(const tMacAddr *mac);
+int mac_parse(const char *str, struct mac_addr *mac);
+void mac_fmt(const struct mac_addr *mac, char *str);
+int wol_send(const struct mac_addr *mac);
