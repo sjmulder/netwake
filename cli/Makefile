@@ -1,14 +1,15 @@
 CFLAGS+=	-Wall -Wextra
-
-SOURCES+=	netwake.c ../common/wol.c
-HEADERS+=	../common/wol.h
+VPATH+=		../common
 
 all: netwake
 
-netwake: ${SOURCES} ${HEADERS}
-	${CC} ${CFLAGS} ${LDFLAGS} -o netwake ${SOURCES} ${LDLIBS}
+netwake: netwake.o wol.o
+	${CC} ${CFLAGS} ${LDFLAGS} -o $@ $^ ${LDLIBS}
 
 clean:
 	rm netwake
+
+netwake.o:	wol.h
+wol.o:		wol.h
 
 .PHONY: all clean
