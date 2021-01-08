@@ -66,7 +66,7 @@ mac_fmt(const struct mac_addr *mac, char *str)
 int
 wol_send(const struct mac_addr *mac)
 {
-	int i;
+	int i, one=1;
 	struct wol_pkt wol;
 	struct sockaddr_in addr;
 	SOCKET sock;
@@ -84,6 +84,8 @@ wol_send(const struct mac_addr *mac)
 	*(uint32_t *)&addr.sin_addr = 0xFFFFFFFF;
 
 	if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET)
+		return -1;
+	if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &one, sizeof(one)) == -1)
 		return -1;
 	if (connect(sock, (struct sockaddr *)&addr, sizeof(addr))
 	    == SOCKET_ERROR)
