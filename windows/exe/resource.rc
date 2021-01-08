@@ -81,12 +81,12 @@ Example: d2:32:e4:87:85:24"
 	IDS_WOLSENT	"Wake-on-LAN packet sent!"
 
 	IDS_ESOCKSETUP	"The Windows socket API could not be initialised."
-	IDS_ESOCKERR	"An error occured while sending the WOL packet."
+	IDS_ESOCKERR	"An error occurred while sending the WOL packet."
 	IDS_ECREATEWND	"A window or control could be created:"
 	IDS_EPREFREAD	"\
-An error occured while reading from the registry or INI file:"
+An error occurred while reading from the registry or INI file:"
 	IDS_EPREFWRITE	"\
-An error occured while writing to the registry or INI file:"
+An error occurred while writing to the registry or INI file:"
 	IDS_ENAMEREAD	"The favourite name could not be read."
 	IDS_ERESMISS	"A resource could not be loaded:"
 	IDS_EREGCLASS	"The window class could not be registered:"
@@ -99,7 +99,7 @@ STRINGTABLE
 	IDS_APPTITLE	"Netwake"
 	IDS_INFOTEXT	"\
 Schakel op afstand een computer in met een Wake-on-LAN-bericht.\r\n\t\n\
-De computer moet zich op hetzelfde netwerk bevinden en WOL moet ingeschaked \
+De computer moet zich op hetzelfde netwerk bevinden en WOL moet ingeschakeld \
 zijn in de firmware.\r\n\r\n\
 Door Sijmen J. Mulder.\r\n\
 Contact: ik@sjmulder.nl"
@@ -115,9 +115,9 @@ Contact: ik@sjmulder.nl"
 	IDS_REQNAMEMAC	"\
 Vul een MAC-adres en naam in om het als favoriet op te kunnen slaan."
 	IDS_BADMAC	"\
-Ongelding MAC-adres.\r\n\r\n\
+Ongeldig MAC-adres.\r\n\r\n\
 Het adres moet bestaan uit 6 paren hexadecimale cijfers (0-A), optioneel \
-gescheiden door duppele punten.\r\n\r\n\
+gescheiden door dubbele punten.\r\n\r\n\
 Bijvoorbeeld: d2:32:e4:87:85:24"
 	IDS_WOLSENT	"Wake-on-LAN-bericht verstuurd!"
 
