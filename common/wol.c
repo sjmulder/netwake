@@ -78,6 +78,7 @@ wol_send(const struct mac_addr *mac)
 		wol.macs[i] = *mac;
 
 	memset(&addr, 0, sizeof(addr));
+	addr.sin_len = sizeof(addr);
 	addr.sin_family = AF_INET;
 	addr.sin_port = 9;
 	*(uint32_t *)&addr.sin_addr = 0xFFFFFFFF;
