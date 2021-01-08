@@ -3,7 +3,7 @@
 #include <windows.h>
 #include <winsock.h>
 #include <commctrl.h>
-#include "../../common/wol.h"
+#include "../common/wol.h"
 #include "resource.h"
 #include "prefs.h"
 #include "err.h"
@@ -229,17 +229,17 @@ static void
 saveFav(void)
 {
 	char macStr[256], name[256];
-	tMacAddr mac;
+	struct mac_addr mac;
 
 	GetWindowText(sMacField, macStr, sizeof(macStr));
 	GetWindowText(sNameField, name, sizeof(name));
 
 	if (!strlen(macStr) || !strlen(name))
 		{Warn(IDS_REQNAMEMAC); return;}
-	if (ParseMacAddr(macStr, &mac) == -1)
+	if (mac_parse(macStr, &mac) == -1)
 		{Warn(IDS_BADMAC); return;}
 
-	FormatMacAddr(&mac, macStr);
+	mac_fmt(&mac, macStr);
 	SetWindowText(sMacField, macStr);
 
 	if (!WriteFav(name, macStr))
@@ -301,17 +301,17 @@ static void
 sendWol(void)
 {
 	char buf[256];
-	tMacAddr mac;
+	struct mac_addr mac;
 
 	GetWindowText(sMacField, buf, sizeof(buf));
 
-	if (ParseMacAddr(buf, &mac) == -1)
+	if (mac_parse(buf, &mac) == -1)
 		{Warn(IDS_BADMAC); return;}
 
-	FormatMacAddr(&mac, buf);
+	mac_fmt(&mac, buf);
 	SetWindowText(sMacField, buf);
 
-	if (SendWolPacket(&mac) == -1)
+	if (wol_send(&mac) == -1)
 		{Warn(IDS_ESOCKERR); return;}
 
 	Info(IDS_WOLSENT);
