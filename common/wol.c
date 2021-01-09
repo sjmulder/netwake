@@ -1,4 +1,3 @@
-#include <stdint.h>
 #include "wol.h"
 
 #ifdef _WIN32
@@ -14,6 +13,12 @@
 # define INVALID_SOCKET	-1
 # define SOCKET_ERROR	-1
 typedef int SOCKET;
+#endif
+
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+typedef unsigned __int32 uint32_t;
+#else
+# include <stdint.h>
 #endif
 
 #define LEN(a) (sizeof(a)/sizeof(*(a)))
