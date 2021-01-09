@@ -100,7 +100,7 @@ SOURCE=.\winmain.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\wol.c
+SOURCE=..\common\wol.c
 # End Source File
 # End Group
 # Begin Group "Header Files"
@@ -116,7 +116,7 @@ SOURCE=..\util.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\wol.h
+SOURCE=..\common\wol.h
 # End Source File
 # End Group
 # Begin Group "Resource Files"
