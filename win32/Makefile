@@ -7,6 +7,7 @@ LDFLAGS+=	-s -mwindows -nostdlib
 LDFLAGS+=	-Wl,--dynamicbase,--export-all-symbols
 LDLIBS+=	-lkernel32 -luser32 -lgdi32 -ladvapi32 -lwsock32
 
+VPATH+=		..
 VPATH+=		../common
 
 all: netwake.exe
