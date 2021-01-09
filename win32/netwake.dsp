@@ -92,7 +92,11 @@ LINK32=link.exe
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE=..\util.c
+SOURCE=.\err.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\prefs.c
 # End Source File
 # Begin Source File
 
@@ -108,11 +112,15 @@ SOURCE=..\common\wol.c
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
-SOURCE=.\resource.h
+SOURCE=.\err.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\util.h
+SOURCE=.\prefs.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\resource.h
 # End Source File
 # Begin Source File
 
