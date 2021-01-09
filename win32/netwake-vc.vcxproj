@@ -95,14 +95,14 @@
     <ResourceCompile Include="resource.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\common\wol.c" />
+    <ClCompile Include="..\common\wol.c" />
     <ClCompile Include="err.c" />
     <ClCompile Include="prefs.c" />
     <ClCompile Include="std.c" />
     <ClCompile Include="winmain.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\common\wol.h" />
+    <ClInclude Include="..\common\wol.h" />
     <ClInclude Include="err.h" />
     <ClInclude Include="prefs.h" />
     <ClInclude Include="resource.h" />
