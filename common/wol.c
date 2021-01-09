@@ -92,7 +92,8 @@ wol_send(const struct mac_addr *mac)
 
 	if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET)
 		return -1;
-	if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &one, sizeof(one)) == -1)
+	if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST, (char *)&one,
+	    sizeof(one)) == -1)
 		return -1;
 	if (connect(sock, (struct sockaddr *)&addr, sizeof(addr))
 	    == SOCKET_ERROR)
