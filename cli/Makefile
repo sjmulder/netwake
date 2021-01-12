@@ -1,3 +1,5 @@
+SYSCONFDIR?=	/etc
+
 CFLAGS+=	-Wall -Wextra
 VPATH+=		../common
 
@@ -7,9 +9,12 @@ netwake: netwake.o wol.o
 	${CC} ${CFLAGS} ${LDFLAGS} -o $@ $^ ${LDLIBS}
 
 clean:
-	rm netwake
+	rm netwake config.h
 
-netwake.o:	wol.h
+config.h:
+	echo "#define SYSCONFDIR \"${SYSCONFDIR}\"" >config.h
+
+netwake.o:	wol.h config.h
 wol.o:		wol.h
 
 .PHONY: all clean
