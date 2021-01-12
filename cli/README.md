@@ -17,22 +17,16 @@ Wake-on-LAN protocol.
     MAC address.
  2. Build the Netwake CLI (see below) or install it with your package
     manager.
- 3. Run `netwake <mac-address>` (e.g. `netwake 01:23:45:67:89:ab`).
+ 3. Run `netwake <mac-address>`, e.g. `netwake 01:23:45:67:89:ab`.
 
-To use names instead of MAC addresses, create a file at any of these
-locations:
-
- - `~/.config/woltab`
- - `~/.woltab`
- - `/etc/woltab`
- - or set `$WOLTAB` to a path.
-
-Then add entries like so:
+To use names instead of MAC addresses, create a file at
+`~/.config/woltab`, `~/.woltab`, `/etc/woltab` or set `$WOLTAB` to a
+path, then add entries like so:
 
     # mac-address name
-    01:23:45:67:89:0a my-pc
+    01:23:45:67:89:ab my-pc
 
-Now you can do `netwake my-pc`.
+Now you can use `netwake my-pc`.
 
 Problems? Missing features? Ideas? File an
 [issue](https://github.com/sjmulder/netwake/issues)!
