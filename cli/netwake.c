@@ -17,12 +17,8 @@ lookup_in(const char *path, const char *name)
 	char *p;
 	FILE *f;
 
-	fprintf(stderr, "trying %s\n", path);
-
-	if (!(f = fopen(path, "r"))) {
-		fprintf(stderr, "%s: noent\n", path);
+	if (!(f = fopen(path, "r")))
 		return NULL;
-	}
 
 	while ((p = fgets(l, sizeof(l), f))) {
 		if ((p = strchr(l, '#')))
