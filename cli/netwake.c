@@ -39,7 +39,11 @@ static char *
 lookup(const char *name)
 {
 	static char p[1024];
-	char *home, *home_cfg, *val;
+	char *woltab, *home, *home_cfg, *val;
+
+	if ((woltab = getenv("WOLTAB")) &&
+	    (val = lookup_in(woltab, name)))
+		return val;
 
 	home = getenv("HOME");
 	home_cfg = getenv("XDG_CONFIG_HOME");
