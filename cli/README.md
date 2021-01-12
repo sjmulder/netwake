@@ -4,12 +4,12 @@ Netwake CLI
 ===========
 Simple Wake-on-LAN utility.
 
-**netwake** *mac-address* | *name*
-
 **[Other versions](..)**
 
 Usage
 -----
+**netwake** *mac-address* | *name*
+
 With Netwake, you can wake up a computer over the network using the
 Wake-on-LAN protocol.
 
@@ -41,9 +41,9 @@ Building
 --------
 Should work on any Unix, including Linux and macOS:
 
-   cd cli/
-   make
-   sudo make install
+    cd cli/
+    make
+    sudo make install
 
 Author
 ------
