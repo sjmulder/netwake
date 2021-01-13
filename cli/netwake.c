@@ -85,7 +85,7 @@ main(int argc, char **argv)
 		errx(1, "invaid MAC in woltab: %s", s);
 
 	if (wol_send(&mac) == -1)
-		errx(1, "failed to send packet");
+		err(1, "failed to send packet");
 
 	printf("WOL packet sent!\n");
 	return 0;
