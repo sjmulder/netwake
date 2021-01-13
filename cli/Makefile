@@ -9,13 +9,10 @@ OBJS+=		netwake.o wol.o
 
 all: netwake netwake.1
 
-netwake: ${OBJS}
-	${CC} ${CFLAGS} ${LDFLAGS} -o $@ ${OBJS} ${LDLIBS}
-
 clean:
 	rm -f netwake *.o config.h netwake.1
 
-install: all netwake.1
+install: all
 	install -d ${DESTDIR}${PREFIX}/bin
 	install -d ${DESTDIR}${MANPREFIX}/man1
 	install -m755 netwake   ${DESTDIR}${PREFIX}/bin/
@@ -24,6 +21,9 @@ install: all netwake.1
 uninstall:
 	rm -f ${DESTDIR}${PREFIX}/bin/netwake
 	rm -f ${DESTDIR}${MANPREFIX}/man1/netwake.1
+
+netwake: ${OBJS}
+	${CC} ${CFLAGS} ${LDFLAGS} -o $@ ${OBJS} ${LDLIBS}
 
 config.h:
 	echo "#define SYSCONFDIR \"${SYSCONFDIR}\"" >config.h
