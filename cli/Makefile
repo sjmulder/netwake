@@ -5,11 +5,12 @@ SYSCONFDIR?=	/etc
 
 CFLAGS+=	-Wall -Wextra
 VPATH+=		../common
+OBJS+=		netwake.o wol.o
 
 all: netwake netwake.1
 
-netwake: netwake.o wol.o
-	${CC} ${CFLAGS} ${LDFLAGS} -o $@ $^ ${LDLIBS}
+netwake: ${OBJS}
+	${CC} ${CFLAGS} ${LDFLAGS} -o $@ ${OBJS} ${LDLIBS}
 
 clean:
 	rm -f netwake *.o config.h netwake.1
