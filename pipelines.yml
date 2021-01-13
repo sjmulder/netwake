@@ -17,6 +17,7 @@ jobs:
         win32/netwake.zip
         win32/netwake.fd
       targetFolder: $(Build.ArtifactStagingDirectory)
+      flattenFolders: true
   - task: PublishBuildArtifacts@1
     displayName: Publish
     inputs:
