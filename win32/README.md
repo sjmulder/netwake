@@ -7,7 +7,7 @@ Simple Wake-on-LAN utility for Windows *all the way up from 3.11*.
 (Depicted: Netwake on Windows 3.11, Windows 95, Windows XP with regular
 and large fonts, Windows 8 at 150% DPI, Windows 10 at 150% DPI.)
 
-**[Other versions](..)**
+**[Other versions](../)**
 
 Usage
 -------

@@ -2,7 +2,7 @@ Netwake CLI
 ===========
 Simple Wake-on-LAN utility.
 
-**[Other versions](..)**
+**[Other versions](../)**
 
 Usage
 -----
