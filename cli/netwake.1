@@ -1,0 +1,23 @@
+.Dd January 11, 2021
+.Dt NETWAKE 1
+.Os
+.Sh NAME
+.Nm netwake
+.Nd simple Wake-on-LAN utility
+.Sh SYNOPSIS
+.Nm
+.Ar mac-address
+.Sh DESCRIPTION
+Turns on a computer remotely by sending it a Wake-on-LAN packet.
+The computer must be on the same network
+and have WOL enabled in its firmware.
+.Sh EXIT STATUS
+Exits 0 if the packet was sent, and >0 if an error occurs.
+.Sh EXAMPLES
+.Bd -literal -offset indent
+$ netwake 12:34:56:78:9a:bc
+WOL packet sent
+.Ed
+.Sh AUTHORS
+.An Sijmen J. Mulder
+.Aq Mt ik@sjmulder.nl
