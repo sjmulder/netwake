@@ -12,7 +12,7 @@ netwake: netwake.o wol.o
 	${CC} ${CFLAGS} ${LDFLAGS} -o $@ $^ ${LDLIBS}
 
 clean:
-	rm netwake config.h
+	rm -f netwake *.o config.h
 
 install: all
 	install -d ${DESTDIR}${PREFIX}/bin
