@@ -22,9 +22,10 @@ To use names instead of MAC addresses, create a file at
 path, then add entries like so:
 
     # mac-address name
-    01:23:45:67:89:ab my-pc
+    12:34:56:78:9a:bc sijmens-pc
+    34:56:78:9a:bc:de sijmens-rpi
 
-Now you can use `netwake my-pc`.
+Now you can use `netwake sijmens-pc`.
 
 Problems? Missing features? Ideas? File an
 [issue](https://github.com/sjmulder/netwake/issues)!
