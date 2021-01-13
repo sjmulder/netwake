@@ -1,5 +1,3 @@
-[![Build Status](https://dev.azure.com/sjmulder/netwake/_apis/build/status/netwake?branchName=master)](https://dev.azure.com/sjmulder/netwake/_build/latest?definitionId=8&branchName=master)
-
 Netwake
 =======
 Simple Wake-on-LAN utility for Windows *all the way up from 3.11*, plus

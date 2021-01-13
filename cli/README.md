@@ -1,5 +1,3 @@
-[![Build Status](https://dev.azure.com/sjmulder/netwake/_apis/build/status/netwake?branchName=master)](https://dev.azure.com/sjmulder/netwake/_build/latest?definitionId=8&branchName=master)
-
 Netwake CLI
 ===========
 Simple Wake-on-LAN utility.
