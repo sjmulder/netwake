@@ -6,15 +6,15 @@ SYSCONFDIR?=	/etc
 CFLAGS+=	-Wall -Wextra
 VPATH+=		../common
 
-all: netwake
+all: netwake netwake.1
 
 netwake: netwake.o wol.o
 	${CC} ${CFLAGS} ${LDFLAGS} -o $@ $^ ${LDLIBS}
 
 clean:
-	rm -f netwake *.o config.h
+	rm -f netwake *.o config.h netwake.1
 
-install: all
+install: all netwake.1
 	install -d ${DESTDIR}${PREFIX}/bin
 	install -d ${DESTDIR}${MANPREFIX}/man1
 	install -m755 netwake   ${DESTDIR}${PREFIX}/bin/
@@ -26,6 +26,9 @@ uninstall:
 
 config.h:
 	echo "#define SYSCONFDIR \"${SYSCONFDIR}\"" >config.h
+
+netwake.1: netwake.1.in
+	sed -e 's,/etc,${SYSCONFDIR},' <netwake.1.in >netwake.1
 
 netwake.o:	wol.h config.h
 wol.o:		wol.h
