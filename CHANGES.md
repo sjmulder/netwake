@@ -1,6 +1,6 @@
 Netwake 0.2
 -----------
-Wed 13 Oct 2020
+Wed 13 Jan 2021
 
  - New cross platform CLI
  - Windows: fixed typos in resources
