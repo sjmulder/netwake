@@ -26,7 +26,7 @@ netwake: ${OBJS}
 	${CC} ${CFLAGS} ${LDFLAGS} -o $@ ${OBJS} ${LDLIBS}
 
 config.h:
-	echo "#define SYSCONFDIR \"${SYSCONFDIR}\"" >config.h
+	echo '#define SYSCONFDIR "${SYSCONFDIR}"' >config.h
 
 netwake.1: netwake.1.in
 	sed -e 's,/etc,${SYSCONFDIR},' <netwake.1.in >netwake.1
