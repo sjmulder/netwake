@@ -87,6 +87,5 @@ main(int argc, char **argv)
 	if (wol_send(&mac) == -1)
 		err(1, "failed to send packet");
 
-	printf("WOL packet sent!\n");
 	return 0;
 }
