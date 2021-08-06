@@ -6,12 +6,16 @@
 .Nd simple Wake-on-LAN utility
 .Sh SYNOPSIS
 .Nm
-.Ar mac-address |
-.Ar name
+.Ar mac-address Ns | Ns
+.Ar name ...
 .Sh DESCRIPTION
-Turns on a computer remotely by sending it a Wake-on-LAN packet.
-The computer must be on the same network
-and have WOL enabled in its firmware.
+Turns on computers remotely by sending them Wake-on-LAN packets.
+The computers must be on the same network
+and have WOL enabled in their firmware.
+.Pp
+Multiple targets can be passed.
+If an error occurs, a message is printed
+and execution continues with the next target.
 .Pp
 To wake a computer by name instead of its MAC address,
 create a file at any of these locations:
@@ -28,20 +32,21 @@ separated by whitespace.
 See
 .Sx EXAMPLES .
 .Sh EXIT STATUS
-Exits 0 if the packet was sent, and >0 if an error occurs.
+Exits with the number of failures
+.Pq so 0 if no error occurs .
 .Sh EXAMPLES
 Wake a computer by its MAC address:
 .Bd -literal -offset indent
 $ netwake 12:34:56:78:9a:bc
 .Ed
 .Pp
-By name:
+Multiple, by name:
 .Bd -literal -offset indent
 $ cat ~/.woltab
 12:34:56:78:9a:bc sijmens-pc
 34:56:78:9a:bc:de sijmens-rpi
 
-$ netwake sijmens-pc
+$ netwake sijmens-pc sijmens-pi
 .Ed
 .Sh AUTHORS
 .An Sijmen J. Mulder

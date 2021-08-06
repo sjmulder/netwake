@@ -6,16 +6,19 @@ Simple Wake-on-LAN utility.
 
 Usage
 -----
-**netwake** *mac-address* | *name*
+**netwake** *mac-address*|*name* ...
 
-With Netwake, you can wake up a computer over the network using the
+With Netwake, you can wake up computers over the network using the
 Wake-on-LAN protocol.
 
- 1. Enable Wake-on-LAN on the target computer. Note the network card's
-    MAC address.
+ 1. Enable Wake-on-LAN on the target computer(s). Note the network
+    card's MAC address.
  2. Build the Netwake CLI (see below) or install it with your package
     manager.
  3. Run `netwake <mac-address>`, e.g. `netwake 01:23:45:67:89:ab`.
+
+Multiple targets can be passed. If an error occurs, a message is
+printed and execution continues with the next target.
 
 To use names instead of MAC addresses, create a file at
 `~/.config/woltab`, `~/.woltab`, `/etc/woltab` or set `$WOLTAB` to a
@@ -25,7 +28,8 @@ path, then add entries like so:
     12:34:56:78:9a:bc sijmens-pc
     34:56:78:9a:bc:de sijmens-rpi
 
-Now you can use `netwake sijmens-pc`.
+Now you can use `netwake sijmens-pc`, or even `netwake sijmens-pc
+sijmens-rpi` to boot both at once.
 
 Problems? Missing features? Ideas? File an
 [issue](https://github.com/sjmulder/netwake/issues)!

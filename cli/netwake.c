@@ -67,25 +67,41 @@ lookup(const char *name)
 	return lookup_in(SYSCONFDIR "/woltab", name);
 }
 
+static int
+wake(const char *arg)
+{
+	const char *tabval;
+	struct mac_addr mac;
+
+	if (mac_parse(arg, &mac) != -1)
+		;
+	else if (!(tabval = lookup(arg))) {
+		warnx("%s: invalid MAC address and not in woltab", arg);
+		return -1;
+	} else if (mac_parse(tabval, &mac) == -1) {
+		warnx("%s: invaid MAC in woltab", tabval);
+		return -1;
+	}
+
+	if (wol_send(&mac) == -1) {
+		warnx("%s: failed to send packet", arg);
+		return -1;
+	}
+
+	return 0;
+}
+
 int
 main(int argc, char **argv)
 {
-	struct mac_addr mac;
-	const char *s;
+	int i, nfail=0;
 
-	if (argc != 2)
-		errx(1, "usage: netwake <mac-addr>");
+	if (argc < 2)
+		errx(1, "usage: netwake <mac-addr> ...");
 
-	if (mac_parse(argv[1], &mac) != -1)
-		;
-	else if (!(s = lookup(argv[1])))
-		errx(1, "invalid MAC address and not in woltab: %s",
-		    argv[1]);
-	else if (mac_parse(s, &mac) == -1)
-		errx(1, "invaid MAC in woltab: %s", s);
+	for (i=1; i < argc; i++)
+		if (wake(argv[i]) == -1)
+			nfail++;
 
-	if (wol_send(&mac) == -1)
-		err(1, "failed to send packet");
-
-	return 0;
+	return nfail;
 }
