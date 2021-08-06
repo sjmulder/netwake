@@ -33,7 +33,6 @@ Exits 0 if the packet was sent, and >0 if an error occurs.
 Wake a computer by its MAC address:
 .Bd -literal -offset indent
 $ netwake 12:34:56:78:9a:bc
-WOL packet sent
 .Ed
 .Pp
 By name:
@@ -43,7 +42,6 @@ $ cat ~/.woltab
 34:56:78:9a:bc:de sijmens-rpi
 
 $ netwake sijmens-pc
-WOL packet sent
 .Ed
 .Sh AUTHORS
 .An Sijmen J. Mulder
