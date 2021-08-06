@@ -6,7 +6,7 @@ Simple Wake-on-LAN utility.
 
 Usage
 -----
-**netwake** *mac-address*|*name* ...
+**netwake** [**-V**] *mac-address*|*name* ...
 
 With Netwake, you can wake up computers over the network using the
 Wake-on-LAN protocol.
@@ -19,6 +19,8 @@ Wake-on-LAN protocol.
 
 Multiple targets can be passed. If an error occurs, a message is
 printed and execution continues with the next target.
+
+With **-V**, netwake prints its version number and exits.
 
 To use names instead of MAC addresses, create a file at
 `~/.config/woltab`, `~/.woltab`, `/etc/woltab` or set `$WOLTAB` to a

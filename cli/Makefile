@@ -7,6 +7,8 @@ CFLAGS+=	-Wall -Wextra
 VPATH+=		../common
 OBJS+=		netwake.o wol.o
 
+VERSION?=	0.3
+
 all: netwake netwake.1
 
 clean:
@@ -27,6 +29,7 @@ netwake: ${OBJS}
 
 config.h:
 	echo '#define SYSCONFDIR "${SYSCONFDIR}"' >config.h
+	echo '#define VERSION "${VERSION}"' >>config.h
 
 netwake.1: netwake.1.in
 	sed -e 's,/etc,${SYSCONFDIR},' <netwake.1.in >netwake.1

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <getopt.h>
 #include <sysexits.h>
 #include <err.h>
 #include "../common/wol.h"
@@ -91,14 +92,26 @@ wake(const char *arg)
 int
 main(int argc, char **argv)
 {
-	int i, nfail=0;
+	int c,i, nfail=0;
 
-	if (argc < 2) {
+	while ((c = getopt(argc, argv, "V")) != -1)
+		switch (c) {
+		case 'V':
+			puts("netwake " VERSION);
+			return 0;
+		default:
+			return EX_USAGE;
+		}
+
+	argc -= optind;
+	argv += optind;
+
+	if (argc < 1) {
 		fprintf(stderr, "usage: netwake <mac-addr> ...\n");
 		return EX_USAGE;
 	}
 
-	for (i=1; i < argc; i++)
+	for (i=0; i < argc; i++)
 		if (wake(argv[i]) == -1)
 			nfail++;
 

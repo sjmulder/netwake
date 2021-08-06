@@ -6,6 +6,7 @@
 .Nd simple Wake-on-LAN utility
 .Sh SYNOPSIS
 .Nm
+.Op Fl V
 .Ar mac-address Ns | Ns
 .Ar name ...
 .Sh DESCRIPTION
@@ -16,6 +17,11 @@ and have WOL enabled in their firmware.
 Multiple targets can be passed.
 If an error occurs, a message is printed
 and execution continues with the next target.
+.Pp
+With
+.Fl V ,
+.Nm
+prints its version number and exits.
 .Pp
 To wake a computer by name instead of its MAC address,
 create a file at any of these locations:
