@@ -20,11 +20,11 @@ clean:
 netwake.exe: winmain.o resource.o prefs.o err.o wol.o std.o
 	$(CC) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
-netwake.zip: netwake.exe README.md LICENSE.md CHANGES.md
+netwake.zip: netwake.exe README.md LICENSE.md CHANGELOG.md
 	rm -f netwake.zip
 	zip -qj netwake.zip $^
 
-netwake.fd: netwake.exe README.md LICENSE.md CHANGES.md
+netwake.fd: netwake.exe README.md LICENSE.md CHANGELOG.md
 	dd if=/dev/zero of=netwake.fd.tmp bs=1440K count=1 status=none
 	mformat -i netwake.fd.tmp -f 1440 -v netwake ::
 	mcopy -i netwake.fd.tmp $^ ::/
