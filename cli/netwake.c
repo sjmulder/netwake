@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <sysexits.h>
 #include <err.h>
 #include "../common/wol.h"
 #include "config.h"
@@ -96,8 +97,10 @@ main(int argc, char **argv)
 {
 	int i, nfail=0;
 
-	if (argc < 2)
-		errx(1, "usage: netwake <mac-addr> ...");
+	if (argc < 2) {
+		fprintf(stderr, "usage: netwake <mac-addr> ...\n");
+		return EX_USAGE;
+	}
 
 	for (i=1; i < argc; i++)
 		if (wake(argv[i]) == -1)
