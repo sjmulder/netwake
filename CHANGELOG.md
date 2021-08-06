@@ -1,3 +1,9 @@
+0.4 (2021-08-06)
+----------------
+ - CLI: Silent by default (no 'WOL packet sent!').
+ - CLI: Support for waking multiple target at once.
+ - CLI: -V flag for version number.
+
 0.3 (2021-01-14)
 -----------------
  - CLI: Makefile now compatible with BSD make.

@@ -7,7 +7,7 @@ CFLAGS+=	-Wall -Wextra
 VPATH+=		../common
 OBJS+=		netwake.o wol.o
 
-VERSION?=	0.3
+VERSION?=	0.4
 
 all: netwake netwake.1
 
