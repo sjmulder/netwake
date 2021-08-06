@@ -7,10 +7,6 @@
 #include "../common/wol.h"
 #include "config.h"
 
-#ifndef PREFIX
-#define PREFIX "/usr/local"
-#endif
-
 static char *
 lookup_in(const char *path, const char *name)
 {
