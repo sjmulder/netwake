@@ -7,7 +7,7 @@
 0.3 (2021-01-14)
 -----------------
  - CLI: Makefile now compatible with BSD make.
- - CLI: /etc is replaced with $SYSCONFDIR in man page.
+ - CLI: /etc is replaced with `$SYSCONFDIR` in man page.
 
 0.2 (2021-01-13)
 -----------------
