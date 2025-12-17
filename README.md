@@ -1,3 +1,10 @@
+This repository has **moved** to:
+
+https://codeberg.org/sjmulder/netwake
+
+The GitHub repository will be deleted in time.
+___
+
 Netwake
 =======
 Simple Wake-on-LAN utility for Windows *all the way up from 3.11*, plus
